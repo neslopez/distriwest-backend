@@ -4,9 +4,7 @@
   <title>DistriWest Admin</title>
 
   <style>
-    body {
-      font-family: Arial;
-    }
+    body { font-family: Arial; }
 
     #listaProductos {
       display: grid;
@@ -25,9 +23,7 @@
       transition: 0.2s;
     }
 
-    .producto-card:hover {
-      transform: scale(1.03);
-    }
+    .producto-card:hover { transform: scale(1.03); }
 
     .producto-card img {
       width: 100%;
@@ -47,25 +43,11 @@
       font-weight: bold;
     }
 
-    .exito {
-      background-color: #d4edda;
-      color: #155724;
-    }
+    .exito { background-color: #d4edda; color: #155724; }
+    .error { background-color: #f8d7da; color: #721c24; }
 
-    .error {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
-
-    .oferta {
-      border: 2px solid #e53935;
-      background: #ffecec;
-    }
-
-    .destacado {
-      border: 2px solid #fbc02d;
-      background: #fff8e1;
-    }
+    .oferta { border: 2px solid #e53935; background: #ffecec; }
+    .destacado { border: 2px solid #fbc02d; background: #fff8e1; }
 
     .badge {
       position: absolute;
@@ -80,14 +62,11 @@
     .badge-oferta { background: #e53935; }
     .badge-destacado { background: #fbc02d; color: black; }
 
-    /* MODAL */
     .modal {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       background: rgba(0,0,0,0.5);
     }
 
@@ -127,7 +106,10 @@
 <div id="listaProductos"></div>
 
 <script>
+const API = "https://distriwest-backend-production.up.railway.app";
+
 let productoEditando = null;
+let categoriasGlobal = [];
 
 // MENSAJE
 function mostrarMensaje(texto, tipo) {
@@ -135,16 +117,16 @@ function mostrarMensaje(texto, tipo) {
   div.textContent = texto;
   div.className = tipo;
   div.style.display = "block";
-
   setTimeout(() => div.style.display = "none", 3000);
 }
 
 // CATEGORIAS
 async function cargarCategorias() {
-  const res = await fetch("http://localhost:3000/test-db");
+  const res = await fetch(API + "/test-db");
   const categorias = await res.json();
 
-  // SELECT PRINCIPAL
+  categoriasGlobal = categorias;
+
   const select = document.getElementById("categoriaId");
   select.innerHTML = "";
 
@@ -154,16 +136,13 @@ async function cargarCategorias() {
     option.textContent = cat.nombre;
     select.appendChild(option);
   });
-
-  // 👉 GUARDAMOS EN GLOBAL
-  window.categoriasGlobal = categorias;
 }
 
 // CREAR CATEGORIA
 async function crearCategoria() {
   const nombre = document.getElementById("categoriaNombre").value;
 
-  await fetch("http://localhost:3000/categorias", {
+  await fetch(API + "/categorias", {
     method: "POST",
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({ nombre })
@@ -176,14 +155,14 @@ async function crearCategoria() {
 // CREAR PRODUCTO
 async function crearProducto() {
   try {
-    const file = document.getElementById("imagen").files[0];
     let imagenUrl = null;
+    const file = document.getElementById("imagen").files[0];
 
     if (file) {
       const formData = new FormData();
       formData.append("imagen", file);
 
-      const uploadRes = await fetch("http://localhost:3000/upload", {
+      const uploadRes = await fetch(API + "/upload", {
         method: "POST",
         body: formData
       });
@@ -195,13 +174,14 @@ async function crearProducto() {
     const data = {
       nombre: document.getElementById("nombre").value,
       precio: Number(document.getElementById("precio").value),
-      imagen_url: imagenUrl,
       categoria_id: Number(document.getElementById("categoriaId").value),
       destacado: document.getElementById("destacado").checked,
       oferta: document.getElementById("oferta").checked
     };
 
-    await fetch("http://localhost:3000/productos", {
+    if (imagenUrl) data.imagen_url = imagenUrl;
+
+    await fetch(API + "/productos", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify(data)
@@ -222,7 +202,7 @@ async function crearProducto() {
 
 // LISTAR
 async function cargarProductos() {
-  const res = await fetch("http://localhost:3000/productos");
+  const res = await fetch(API + "/productos");
   const productos = await res.json();
 
   const contenedor = document.getElementById("listaProductos");
@@ -253,51 +233,53 @@ async function cargarProductos() {
 async function eliminarProducto(id) {
   if (!confirm("¿Eliminar producto?")) return;
 
-  await fetch(`http://localhost:3000/productos/${id}`, {
-    method: "DELETE"
-  });
+  await fetch(API + "/productos/" + id, { method: "DELETE" });
 
   cargarProductos();
 }
 
-// EDITAR (ABRIR MODAL)
-async function editarProducto(id) {
-  const res = await fetch("http://localhost:3000/productos");
-  const productos = await res.json();
+// EDITAR
+function editarProducto(id) {
+  const p = document.querySelectorAll(".producto-card")[id-1]; // simple
 
-  const p = productos.find(x => x.id === id);
+  document.getElementById("editNombre").value = p.children[2].innerText;
+  document.getElementById("editPrecio").value = p.children[3].innerText.replace("$","");
 
-  // 👉 cargar categorias en modal
-  cargarCategoriasEnModal(window.categoriasGlobal);
-
-  document.getElementById("editNombre").value = p.nombre;
-  document.getElementById("editPrecio").value = p.precio;
-  document.getElementById("editCategoria").value = p.categoria_id;
-  document.getElementById("editDestacado").checked = p.destacado;
-  document.getElementById("editOferta").checked = p.oferta;
-
+  cargarCategoriasEnModal();
   productoEditando = id;
 
   document.getElementById("modalEditar").style.display = "block";
 }
 
+// MODAL CATEGORIAS
+function cargarCategoriasEnModal() {
+  const select = document.getElementById("editCategoria");
+  select.innerHTML = "";
+
+  categoriasGlobal.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat.id;
+    option.textContent = cat.nombre;
+    select.appendChild(option);
+  });
+}
+
 // GUARDAR EDICION
 async function guardarEdicion() {
   let imagenUrl = null;
-
   const file = document.getElementById("editImagen").files[0];
 
   if (file) {
     const formData = new FormData();
     formData.append("imagen", file);
 
-    const uploadRes = await fetch("http://localhost:3000/upload", {
+    const res = await fetch(API + "/upload", {
       method: "POST",
       body: formData
     });
 
-    const uploadData = await uploadRes.json();
-    imagenUrl = uploadData.url;
+    const dataUpload = await res.json();
+    imagenUrl = dataUpload.url;
   }
 
   const data = {
@@ -305,35 +287,21 @@ async function guardarEdicion() {
     precio: Number(document.getElementById("editPrecio").value),
     categoria_id: Number(document.getElementById("editCategoria").value),
     destacado: document.getElementById("editDestacado").checked,
-    oferta: document.getElementById("editOferta").checked,
-    imagen_url: imagenUrl
+    oferta: document.getElementById("editOferta").checked
   };
 
-  await fetch(`http://localhost:3000/productos/${productoEditando}`, {
+  if (imagenUrl) data.imagen_url = imagenUrl;
+
+  await fetch(API + "/productos/" + productoEditando, {
     method: "PUT",
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify(data)
   });
 
+  mostrarMensaje("Producto actualizado", "exito");
   document.getElementById("modalEditar").style.display = "none";
 
-  mostrarMensaje("Producto actualizado", "exito");
   cargarProductos();
-}
-
-function cargarCategoriasEnModal(categorias) {
-  const selectEdit = document.getElementById("editCategoria");
-
-  if (!selectEdit) return;
-
-  selectEdit.innerHTML = "";
-
-  categorias.forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat.id;
-    option.textContent = cat.nombre;
-    selectEdit.appendChild(option);
-  });
 }
 
 window.onload = () => {
