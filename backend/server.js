@@ -52,7 +52,10 @@ app.post("/categorias", async (req, res) => {
 });
 
 app.post("/upload", upload.single("imagen"), (req, res) => {
-  const url = `http://localhost:3000/uploads/${req.file.filename}`;
+  const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+
+  const url = `${baseUrl}/uploads/${req.file.filename}`;
+
   res.json({ url });
 });
 
