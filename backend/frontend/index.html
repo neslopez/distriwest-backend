@@ -3,135 +3,221 @@
 <head>
   <title>DistriWest Admin</title>
 
-  <style>
-    body { font-family: Arial; }
+<style>
+body {
+  font-family: Arial;
+  background: #eef2f7;
+  margin: 0;
+  padding: 20px;
+}
 
-    #listaProductos {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      margin-top: 20px;
-    }
+/* HEADER */
+.header {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
 
-    .producto-card {
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 10px;
-      background: white;
-      text-align: center;
-      position: relative;
-      transition: 0.2s;
-    }
+.header h1 {
+  margin: 0;
+  text-align: center;
+  color: #1976d2;
+}
 
-    .producto-card:hover { transform: scale(1.03); }
+/* ACCIONES */
+.acciones {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
 
-    .producto-card img {
-      width: 100%;
-      height: 90px;
-      object-fit: contain;
-      background: #f5f5f5;
-    }
+/* CONTENEDOR */
+.container {
+  max-width: 1100px;
+  margin: auto;
+}
 
-    #mensaje {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 12px 20px;
-      border-radius: 8px;
-      display: none;
-      z-index: 999;
-      font-weight: bold;
-    }
+/* SECCIONES */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
 
-    .exito { background-color: #d4edda; color: #155724; }
-    .error { background-color: #f8d7da; color: #721c24; }
+.card h2 {
+  margin-top: 0;
+}
 
-    .oferta { border: 2px solid #e53935; background: #ffecec; }
-    .destacado { border: 2px solid #fbc02d; background: #fff8e1; }
+/* INPUTS */
+input, select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  width: 180px;
+}
 
-    .badge {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      padding: 4px 8px;
-      font-size: 11px;
-      color: white;
-      border-radius: 6px;
-    }
+/* FILE */
+input[type="file"] {
+  width: auto;
+}
 
-    .badge-oferta { background: #e53935; }
-    .badge-destacado { background: #fbc02d; color: black; }
+/* BOTONES */
+button {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: none;
+  background: #1976d2;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
 
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-    }
+button:hover {
+  background: #125ea2;
+}
 
-    .modal-content {
-      background: white;
-      padding: 20px;
-      width: 300px;
-      margin: 10% auto;
-      border-radius: 10px;
-    }
-  </style>
+/* GRID PRODUCTOS */
+#listaProductos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+/* CARD PRODUCTO */
+.producto-card {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: 0.2s;
+}
+
+.producto-card:hover {
+  transform: translateY(-5px);
+}
+
+/* IMAGEN */
+.producto-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+/* BADGES */
+.badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: white;
+  border-radius: 6px;
+}
+
+.badge-oferta { background: #e53935; }
+.badge-destacado { background: #fbc02d; color: black; }
+
+/* TEXTO */
+.producto-card b {
+  display: block;
+  margin-top: 8px;
+}
+
+.producto-card p {
+  margin: 5px 0;
+  font-weight: bold;
+  color: #2e7d32;
+}
+</style>
+
 </head>
 
 <body>
 
-<h1>DistriWest Panel</h1>
-<div id="mensaje"></div>
+<header class="header">
+  <h1>DistriWest Panel</h1>
 
-<h2>Crear Categoría</h2>
-<input id="categoriaNombre" placeholder="Nombre categoría">
-<button onclick="crearCategoria()">Crear</button>
+  <div class="acciones">
+    <input type="text" id="buscador" placeholder="Buscar producto...">
 
-<h2>Crear Producto</h2>
-<input id="nombre" placeholder="Nombre">
-<input id="precio" placeholder="Precio">
-<input type="file" id="imagen">
-<select id="categoriaId"></select>
+    <select id="orden">
+      <option value="">Ordenar</option>
+      <option value="precio_asc">Precio ↑</option>
+      <option value="precio_desc">Precio ↓</option>
+      <option value="nombre">Nombre</option>
+    </select>
 
-<br><br>
-<label>Destacado <input type="checkbox" id="destacado"></label>
-<label>Oferta <input type="checkbox" id="oferta"></label>
+    <button onclick="generarPDF()">📄 PDF</button>
+  </div>
+</header>
 
-<br><br>
-<button onclick="crearProducto()">Crear producto</button>
+<div class="container">
 
-<h2>Productos</h2>
-<div id="listaProductos"></div>
+<div class="card">
+  <h2>Crear Categoría</h2>
+  <input id="categoriaNombre" placeholder="Nombre categoría">
+  <button onclick="crearCategoria()">Crear</button>
+</div>
+
+<div class="card">
+  <h2>Crear Producto</h2>
+
+  <div style="display:flex; flex-wrap:wrap; gap:10px;">
+    <input id="nombre" placeholder="Nombre">
+    <input id="precio" placeholder="Precio">
+    <input type="file" id="imagen">
+    <select id="categoriaId"></select>
+  </div>
+
+  <div style="margin-top:10px;">
+    <label>Destacado <input type="checkbox" id="destacado"></label>
+    <label>Oferta <input type="checkbox" id="oferta"></label>
+  </div>
+
+  <br>
+  <button id="btnGuardar" onclick="guardarProducto()">Crear producto</button>
+</div>
+
+<div class="card">
+  <h2>Productos</h2>
+  <div id="listaProductos"></div>
+</div>
+
+</div>
 
 <script>
 const API = "https://distriwest-backend-production.up.railway.app";
 
-let productoEditando = null;
 let productosGlobal = [];
 let categoriasGlobal = [];
+let productoEditando = null;
 
-// MENSAJE
-function mostrarMensaje(texto, tipo) {
-  const div = document.getElementById("mensaje");
-  div.textContent = texto;
-  div.className = tipo;
-  div.style.display = "block";
-  setTimeout(() => div.style.display = "none", 3000);
+// 🔧 NORMALIZADOR DE URL
+function obtenerUrlImagen(url) {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return API + url;
 }
 
-// CATEGORIAS
+// 📦 CARGAR CATEGORIAS
 async function cargarCategorias() {
   const res = await fetch(API + "/test-db");
-  const categorias = await res.json();
-
-  categoriasGlobal = categorias;
+  categoriasGlobal = await res.json();
 
   const select = document.getElementById("categoriaId");
   select.innerHTML = "";
 
-  categorias.forEach(cat => {
+  categoriasGlobal.forEach(cat => {
     const option = document.createElement("option");
     option.value = cat.id;
     option.textContent = cat.nombre;
@@ -139,7 +225,7 @@ async function cargarCategorias() {
   });
 }
 
-// CREAR CATEGORIA
+// ➕ CREAR CATEGORIA
 async function crearCategoria() {
   const nombre = document.getElementById("categoriaNombre").value;
 
@@ -149,80 +235,75 @@ async function crearCategoria() {
     body: JSON.stringify({ nombre })
   });
 
-  mostrarMensaje("Categoría creada", "exito");
   cargarCategorias();
 }
 
-// CREAR PRODUCTO
+// ➕ CREAR PRODUCTO
 async function crearProducto() {
-  try {
-    let imagenUrl = null;
-    const file = document.getElementById("imagen").files[0];
+  let imagenUrl = null;
+  const file = document.getElementById("imagen").files[0];
 
-    if (file) {
-      const formData = new FormData();
-      formData.append("imagen", file);
+  if (file) {
+    const formData = new FormData();
+    formData.append("imagen", file);
 
-      const uploadRes = await fetch(API + "/upload", {
-        method: "POST",
-        body: formData
-      });
-
-      const uploadData = await uploadRes.json();
-      imagenUrl = uploadData.url;
-    }
-
-    const data = {
-      nombre: document.getElementById("nombre").value,
-      precio: Number(document.getElementById("precio").value),
-      categoria_id: Number(document.getElementById("categoriaId").value),
-      destacado: document.getElementById("destacado").checked,
-      oferta: document.getElementById("oferta").checked
-    };
-
-    if (imagenUrl) data.imagen_url = imagenUrl;
-
-    await fetch(API + "/productos", {
+    const res = await fetch(API + "/upload", {
       method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(data)
+      body: formData
     });
 
-    mostrarMensaje("Producto cargado", "exito");
-
-    document.getElementById("nombre").value = "";
-    document.getElementById("precio").value = "";
-    document.getElementById("imagen").value = "";
-
-    cargarProductos();
-
-  } catch {
-    mostrarMensaje("Error al cargar producto", "error");
+    const data = await res.json();
+    imagenUrl = data.url;
   }
+
+  const producto = {
+    nombre: document.getElementById("nombre").value,
+    precio: Number(document.getElementById("precio").value),
+    categoria_id: Number(document.getElementById("categoriaId").value),
+    destacado: document.getElementById("destacado").checked,
+    oferta: document.getElementById("oferta").checked,
+    imagen_url: imagenUrl
+  };
+
+  await fetch(API + "/productos", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(producto)
+  });
+
+  cargarProductos();
 }
 
-function obtenerUrlImagen(url) {
-  if (!url) return "";
-
-  // 👉 caso 1: ya es URL completa
-  if (url.startsWith("http")) return url;
-
-  // 👉 caso 2: viene con /uploads
-  if (url.startsWith("/uploads")) return API + url;
-
-  // 👉 caso 3: solo nombre de archivo
-  return API + "/uploads/" + url;
-}
-
-// LISTAR
+// 📦 CARGAR PRODUCTOS
 async function cargarProductos() {
   const res = await fetch(API + "/productos");
   productosGlobal = await res.json();
+  renderProductos();
+}
 
+// 🎨 RENDER
+function renderProductos() {
   const contenedor = document.getElementById("listaProductos");
   contenedor.innerHTML = "";
 
-  productosGlobal.forEach(p => {
+  let productos = [...productosGlobal];
+
+  // 🔎 BUSCAR
+  const texto = document.getElementById("buscador").value.toLowerCase();
+  if (texto) {
+    productos = productos.filter(p =>
+      p.nombre.toLowerCase().includes(texto)
+    );
+  }
+
+  // 🔽 ORDENAR
+  const orden = document.getElementById("orden").value;
+
+  if (orden === "precio_asc") productos.sort((a,b)=>a.precio-b.precio);
+  if (orden === "precio_desc") productos.sort((a,b)=>b.precio-a.precio);
+  if (orden === "nombre") productos.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+
+  productos.forEach(p => {
     const div = document.createElement("div");
     div.className = "producto-card";
 
@@ -235,62 +316,56 @@ async function cargarProductos() {
       <p>$${p.precio}</p>
       <small>${p.categorias?.nombre || ""}</small>
       <br><br>
-      <button onclick="editarProducto(${p.id})">Editar</button>
-      <button onclick="eliminarProducto(${p.id})">Eliminar</button>
+      <div style="display:flex; gap:5px; justify-content:center;">
+  <button onclick="editarProducto(${p.id})">Editar</button>
+  <button onclick="eliminarProducto(${p.id})">Eliminar</button>
+</div>
     `;
 
     contenedor.appendChild(div);
   });
 }
 
-// ELIMINAR
+// ❌ ELIMINAR
 async function eliminarProducto(id) {
-  if (!confirm("¿Eliminar producto?")) return;
-
   await fetch(API + "/productos/" + id, { method: "DELETE" });
-
   cargarProductos();
 }
 
-// EDITAR
+// 📄 PDF
+function generarPDF() {
+  window.open(API + "/generar-pdf", "_blank");
+}
+
+// 🚀 INIT
+window.onload = () => {
+  cargarCategorias();
+  cargarProductos();
+
+  document.getElementById("buscador").addEventListener("input", renderProductos);
+  document.getElementById("orden").addEventListener("change", renderProductos);
+};
+
 function editarProducto(id) {
   const p = productosGlobal.find(x => x.id === id);
 
-  if (!p) {
-    mostrarMensaje("Producto no encontrado", "error");
-    return;
-  }
+  if (!p) return;
 
-  cargarCategoriasEnModal();
-
-  document.getElementById("editNombre").value = p.nombre;
-  document.getElementById("editPrecio").value = p.precio;
-  document.getElementById("editCategoria").value = p.categoria_id;
-  document.getElementById("editDestacado").checked = p.destacado;
-  document.getElementById("editOferta").checked = p.oferta;
+  // 👉 cargamos en el form de arriba
+  document.getElementById("nombre").value = p.nombre;
+  document.getElementById("precio").value = p.precio;
+  document.getElementById("categoriaId").value = p.categoria_id;
+  document.getElementById("destacado").checked = p.destacado;
+  document.getElementById("oferta").checked = p.oferta;
 
   productoEditando = id;
 
-  document.getElementById("modalEditar").style.display = "block";
+  mostrarModoEdicion();
 }
 
-// MODAL CATEGORIAS
-function cargarCategoriasEnModal() {
-  const select = document.getElementById("editCategoria");
-  select.innerHTML = "";
-
-  categoriasGlobal.forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat.id;
-    option.textContent = cat.nombre;
-    select.appendChild(option);
-  });
-}
-
-// GUARDAR EDICION
-async function guardarEdicion() {
+async function guardarProducto() {
   let imagenUrl = null;
-  const file = document.getElementById("editImagen").files[0];
+  const file = document.getElementById("imagen").files[0];
 
   if (file) {
     const formData = new FormData();
@@ -301,59 +376,58 @@ async function guardarEdicion() {
       body: formData
     });
 
-    const dataUpload = await res.json();
-    imagenUrl = dataUpload.url;
+    const data = await res.json();
+    imagenUrl = data.url;
   }
 
   const data = {
-    nombre: document.getElementById("editNombre").value,
-    precio: Number(document.getElementById("editPrecio").value),
-    categoria_id: Number(document.getElementById("editCategoria").value),
-    destacado: document.getElementById("editDestacado").checked,
-    oferta: document.getElementById("editOferta").checked
+    nombre: document.getElementById("nombre").value,
+    precio: Number(document.getElementById("precio").value),
+    categoria_id: Number(document.getElementById("categoriaId").value),
+    destacado: document.getElementById("destacado").checked,
+    oferta: document.getElementById("oferta").checked
   };
 
-  if (imagenUrl !== null) {
-  data.imagen_url = imagenUrl;
-}
+  if (imagenUrl) data.imagen_url = imagenUrl;
 
-  await fetch(API + "/productos/" + productoEditando, {
-    method: "PUT",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(data)
-  });
+  if (productoEditando) {
+    // ✏️ EDITAR
+    await fetch(API + "/productos/" + productoEditando, {
+      method: "PUT",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(data)
+    });
 
-  mostrarMensaje("Producto actualizado", "exito");
-  document.getElementById("modalEditar").style.display = "none";
+  } else {
+    // ➕ CREAR
+    await fetch(API + "/productos", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(data)
+    });
+  }
 
+  limpiarFormulario();
   cargarProductos();
 }
 
-window.onload = () => {
-  cargarCategorias();
-  cargarProductos();
-};
+function limpiarFormulario() {
+  document.getElementById("nombre").value = "";
+  document.getElementById("precio").value = "";
+  document.getElementById("imagen").value = "";
+  document.getElementById("destacado").checked = false;
+  document.getElementById("oferta").checked = false;
+
+  productoEditando = null;
+
+  document.getElementById("btnGuardar").textContent = "Crear producto";
+}
+
+function mostrarModoEdicion() {
+  document.getElementById("btnGuardar").textContent = "Actualizar producto";
+}
+
 </script>
-
-<!-- MODAL -->
-<div id="modalEditar" class="modal">
-  <div class="modal-content">
-    <h2>Editar producto</h2>
-
-    <input id="editNombre">
-    <input id="editPrecio">
-    <input type="file" id="editImagen">
-    <select id="editCategoria"></select>
-
-    <br><br>
-    <label>Destacado <input type="checkbox" id="editDestacado"></label>
-    <label>Oferta <input type="checkbox" id="editOferta"></label>
-
-    <br><br>
-    <button onclick="guardarEdicion()">Guardar</button>
-    <button onclick="document.getElementById('modalEditar').style.display='none'">Cancelar</button>
-  </div>
-</div>
 
 </body>
 </html>
