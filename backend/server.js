@@ -11,7 +11,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(fileUpload()); // ✅ BIEN ubicado
+app.use(fileUpload());
 
 // 👉 HOME
 app.get("/", (req, res) => {
@@ -43,29 +43,33 @@ app.post("/categorias", async (req, res) => {
   res.json(data);
 });
 
-// 👉 SUBIR IMAGEN (SUPABASE STORAGE)
+// 👉 SUBIR IMAGEN (CORREGIDO PRO)
 app.post("/upload", async (req, res) => {
   try {
     console.log("🔥 ENTRÓ A /upload");
 
     if (!req.files || !req.files.imagen) {
-      console.log("❌ No hay imagen");
       return res.status(400).json({ error: "No hay imagen" });
     }
 
     const file = req.files.imagen;
-    const fileName = Date.now() + "-" + file.name;
 
-    console.log("📦 Subiendo archivo:", fileName);
+    // ✅ limpiar nombre (CLAVE)
+    const safeName = file.name.replace(/\s+/g, "_");
+
+    const fileName = Date.now() + "-" + safeName;
+
+    console.log("📦 Subiendo:", fileName);
 
     const { error } = await supabase.storage
       .from("productos")
       .upload(fileName, file.data, {
-        contentType: file.mimetype
+        contentType: file.mimetype,
+        upsert: true // ✅ importante
       });
 
     if (error) {
-      console.log("❌ ERROR SUPABASE:", error);
+      console.log("❌ ERROR STORAGE:", error);
       return res.status(500).json(error);
     }
 
@@ -73,7 +77,7 @@ app.post("/upload", async (req, res) => {
       .from("productos")
       .getPublicUrl(fileName);
 
-    console.log("✅ URL GENERADA:", data.publicUrl);
+    console.log("✅ URL:", data.publicUrl);
 
     res.json({
       url: data.publicUrl
@@ -84,43 +88,6 @@ app.post("/upload", async (req, res) => {
     res.status(500).json({ error: "Error subiendo imagen" });
   }
 });
-  try {
-    if (!req.files || !req.files.imagen) {
-      return res.status(400).json({ error: "No hay imagen" });
-    }
-
-    const file = req.files.imagen;
-
-    const fileName = Date.now() + "-" + file.name;
-
-    // 👉 subir a supabase
-    const { error } = await supabase.storage
-      .from("productos")
-      .upload(fileName, file.data, {
-        contentType: file.mimetype
-      });
-
-    if (error) {
-      console.log("ERROR STORAGE:", error);
-      return res.status(500).json(error);
-    }
-
-    // 👉 obtener URL pública REAL
-    const { data } = supabase.storage
-      .from("productos")
-      .getPublicUrl(fileName);
-
-    console.log("URL GENERADA:", data.publicUrl);
-
-    res.json({
-      url: data.publicUrl
-    });
-
-  } catch (err) {
-    console.log("ERROR UPLOAD:", err);
-    res.status(500).json({ error: "Error subiendo imagen" });
-  }
-});
 
 // 👉 CREAR PRODUCTO
 app.post("/productos", async (req, res) => {
@@ -128,16 +95,14 @@ app.post("/productos", async (req, res) => {
 
   const { data, error } = await supabase
     .from("productos")
-    .insert([
-      {
-        nombre,
-        precio,
-        imagen_url,
-        categoria_id,
-        destacado,
-        oferta
-      }
-    ])
+    .insert([{
+      nombre,
+      precio,
+      imagen_url,
+      categoria_id,
+      destacado,
+      oferta
+    }])
     .select();
 
   if (error) return res.status(500).json(error);
@@ -159,7 +124,7 @@ app.get("/productos", async (req, res) => {
   res.json(data);
 });
 
-// 👉 ELIMINAR PRODUCTO
+// 👉 ELIMINAR
 app.delete("/productos/:id", async (req, res) => {
   const { id } = req.params;
 
@@ -173,7 +138,7 @@ app.delete("/productos/:id", async (req, res) => {
   res.json({ mensaje: "Producto eliminado" });
 });
 
-// 👉 EDITAR PRODUCTO
+// 👉 EDITAR
 app.put("/productos/:id", async (req, res) => {
   const { id } = req.params;
   const { nombre, precio, categoria_id, destacado, oferta, imagen_url } = req.body;
@@ -201,45 +166,22 @@ app.put("/productos/:id", async (req, res) => {
   res.json(data);
 });
 
-// 👉 GENERAR PDF
+// 👉 PDF
 app.get("/generar-pdf", async (req, res) => {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("productos")
-    .select(`
-      *,
-      categorias(nombre)
-    `);
+    .select(`*, categorias(nombre)`);
 
-  if (error) return res.status(500).json(error);
-
-  const agrupados = {};
+  let html = `<h1>DistriWest</h1>`;
 
   data.forEach(p => {
-    const cat = p.categorias?.nombre || "Sin categoría";
-    if (!agrupados[cat]) agrupados[cat] = [];
-    agrupados[cat].push(p);
+    html += `
+      <div>
+        <img src="${p.imagen_url}" width="100"/>
+        <p>${p.nombre} - $${p.precio}</p>
+      </div>
+    `;
   });
-
-  let html = `
-    <html>
-    <body style="font-family: Arial; padding:20px;">
-      <h1>DistriWest</h1>
-  `;
-
-  for (const categoria in agrupados) {
-    html += `<h2>${categoria}</h2>`;
-
-    agrupados[categoria].forEach(p => {
-      html += `
-        <div style="margin-bottom:10px;">
-          <img src="${p.imagen_url}" width="100"/>
-          <p>${p.nombre} - $${p.precio}</p>
-        </div>
-      `;
-    });
-  }
-
-  html += `</body></html>`;
 
   const browser = await puppeteer.launch({
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
