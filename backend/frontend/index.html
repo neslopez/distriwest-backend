@@ -201,18 +201,6 @@ async function crearProducto() {
   }
 }
 
-function obtenerUrlImagen(url) {
-  if (!url) return "";
-
-  // 👉 caso 1: ya es URL completa
-  if (url.startsWith("http")) return url;
-
-  // 👉 caso 2: viene con /uploads
-  if (url.startsWith("/uploads")) return API + url;
-
-  // 👉 caso 3: solo nombre de archivo
-  return API + "/uploads/" + url;
-}
 
 // LISTAR
 async function cargarProductos() {
@@ -230,7 +218,7 @@ async function cargarProductos() {
       ${p.oferta ? '<div class="badge badge-oferta">OFERTA</div>' : ''}
       ${p.destacado ? '<div class="badge badge-destacado">TOP</div>' : ''}
 
-      <img src="${obtenerUrlImagen(p.imagen_url)}">
+      <img src="${p.imagen_url}">
       <b>${p.nombre}</b>
       <p>$${p.precio}</p>
       <small>${p.categorias?.nombre || ""}</small>
