@@ -274,7 +274,12 @@ async function crearProducto() {
   cargarProductos();
 }
 
+<<<<<<< HEAD
 // 📦 CARGAR PRODUCTOS
+=======
+
+// LISTAR
+>>>>>>> ed0a1f5 (FORCE DEPLOY)
 async function cargarProductos() {
   const res = await fetch(API + "/productos");
   productosGlobal = await res.json();
@@ -311,7 +316,7 @@ function renderProductos() {
       ${p.oferta ? '<div class="badge badge-oferta">OFERTA</div>' : ''}
       ${p.destacado ? '<div class="badge badge-destacado">TOP</div>' : ''}
 
-      <img src="${obtenerUrlImagen(p.imagen_url)}">
+      <img src="${p.imagen_url}">
       <b>${p.nombre}</b>
       <p>$${p.precio}</p>
       <small>${p.categorias?.nombre || ""}</small>
