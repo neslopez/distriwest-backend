@@ -313,7 +313,9 @@ async function guardarEdicion() {
     oferta: document.getElementById("editOferta").checked
   };
 
-  if (imagenUrl) data.imagen_url = imagenUrl;
+  if (imagenUrl !== null) {
+  data.imagen_url = imagenUrl;
+}
 
   await fetch(API + "/productos/" + productoEditando, {
     method: "PUT",
