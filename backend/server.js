@@ -144,108 +144,105 @@ app.get("/generar-pdf", async (req, res) => {
   });
 
   let html = `
-  <html>
-  <head>
-    <meta charset="UTF-8">
-    <style>
-      body {
-        font-family: Arial;
-        padding: 10px;
-        background: #f5f7fb;
-      }
+<html>
+<head>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 10px;
+    }
 
-      .header {
-        text-align: center;
-        background: #1976d2;
-        color: white;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-      }
+    h1 {
+      text-align: center;
+    }
 
-      h2 {
-        margin-top: 20px;
-        background: #1976d2;
-        color: white;
-        padding: 6px;
-        border-radius: 5px;
-      }
+    h2 {
+      margin-top: 20px;
+      border-bottom: 2px solid #1976d2;
+    }
 
-      .grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
 
-      .card {
-        width: 30%;
-        background: white;
-        border-radius: 8px;
-        padding: 8px;
-        text-align: center;
-        position: relative;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        page-break-inside: avoid;
-      }
+    td {
+      width: 33%;
+      text-align: center;
+      padding: 10px;
+      vertical-align: top;
+    }
 
-      .card img {
-        width: 100%;
-        height: 100px;
-        object-fit: contain;
-      }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+    }
 
-      .nombre {
-        font-weight: bold;
-        font-size: 13px;
-      }
+    img {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+    }
 
-      .precio {
-        color: green;
-        font-weight: bold;
-        font-size: 14px;
-      }
+    .nombre {
+      font-weight: bold;
+      margin-top: 5px;
+    }
 
-      .badge {
-        position: absolute;
-        top: 5px;
-        left: 5px;
-        font-size: 10px;
-        padding: 3px 6px;
-        border-radius: 4px;
-        color: white;
-      }
+    .precio {
+      color: green;
+      font-weight: bold;
+    }
 
-      .oferta { background: red; }
-      .destacado { background: orange; color: black; }
+    .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 5px;
+    }
 
-    </style>
-  </head>
+    .oferta { background: red; color: white; }
+    .top { background: orange; }
+  </style>
+</head>
 
-  <body>
+<body>
 
-  <div class="header">
-    <h1>DistriWest</h1>
-    <p>Catálogo</p>
-  </div>
-  `;
+<h1>DistriWest</h1>
+`;
 
   for (const categoria in agrupados) {
-    html += `<h2>${categoria}</h2><div class="grid">`;
+  const productos = agrupados[categoria];
 
-    agrupados[categoria].forEach(p => {
-      html += `
+  html += `<h2>${categoria}</h2><table><tr>`;
+
+  productos.forEach((p, i) => {
+    html += `
+      <td>
         <div class="card">
+
           ${p.oferta ? '<div class="badge oferta">OFERTA</div>' : ''}
-          ${p.destacado ? '<div class="badge destacado">TOP</div>' : ''}
+          ${p.destacado ? '<div class="badge top">TOP</div>' : ''}
+
           <img src="${p.imagen_url}" />
+
           <div class="nombre">${p.nombre}</div>
           <div class="precio">$${p.precio}</div>
-        </div>
-      `;
-    });
 
-    html += `</div>`;
-  }
+        </div>
+      </td>
+    `;
+
+    if ((i + 1) % 3 === 0) {
+      html += `</tr><tr>`;
+    }
+  });
+
+  html += `</tr></table>`;
+}
 
   html += `</body></html>`;
 
