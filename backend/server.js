@@ -46,6 +46,45 @@ app.post("/categorias", async (req, res) => {
 // 👉 SUBIR IMAGEN (SUPABASE STORAGE)
 app.post("/upload", async (req, res) => {
   try {
+    console.log("🔥 ENTRÓ A /upload");
+
+    if (!req.files || !req.files.imagen) {
+      console.log("❌ No hay imagen");
+      return res.status(400).json({ error: "No hay imagen" });
+    }
+
+    const file = req.files.imagen;
+    const fileName = Date.now() + "-" + file.name;
+
+    console.log("📦 Subiendo archivo:", fileName);
+
+    const { error } = await supabase.storage
+      .from("productos")
+      .upload(fileName, file.data, {
+        contentType: file.mimetype
+      });
+
+    if (error) {
+      console.log("❌ ERROR SUPABASE:", error);
+      return res.status(500).json(error);
+    }
+
+    const { data } = supabase.storage
+      .from("productos")
+      .getPublicUrl(fileName);
+
+    console.log("✅ URL GENERADA:", data.publicUrl);
+
+    res.json({
+      url: data.publicUrl
+    });
+
+  } catch (err) {
+    console.log("💥 ERROR GENERAL:", err);
+    res.status(500).json({ error: "Error subiendo imagen" });
+  }
+});
+  try {
     if (!req.files || !req.files.imagen) {
       return res.status(400).json({ error: "No hay imagen" });
     }
