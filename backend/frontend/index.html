@@ -109,6 +109,7 @@
 const API = "https://distriwest-backend-production.up.railway.app";
 
 let productoEditando = null;
+let productosGlobal = [];
 let categoriasGlobal = [];
 
 // MENSAJE
@@ -200,15 +201,28 @@ async function crearProducto() {
   }
 }
 
+function obtenerUrlImagen(url) {
+  if (!url) return "";
+
+  // 👉 caso 1: ya es URL completa
+  if (url.startsWith("http")) return url;
+
+  // 👉 caso 2: viene con /uploads
+  if (url.startsWith("/uploads")) return API + url;
+
+  // 👉 caso 3: solo nombre de archivo
+  return API + "/uploads/" + url;
+}
+
 // LISTAR
 async function cargarProductos() {
   const res = await fetch(API + "/productos");
-  const productos = await res.json();
+  productosGlobal = await res.json();
 
   const contenedor = document.getElementById("listaProductos");
   contenedor.innerHTML = "";
 
-  productos.forEach(p => {
+  productosGlobal.forEach(p => {
     const div = document.createElement("div");
     div.className = "producto-card";
 
@@ -216,7 +230,7 @@ async function cargarProductos() {
       ${p.oferta ? '<div class="badge badge-oferta">OFERTA</div>' : ''}
       ${p.destacado ? '<div class="badge badge-destacado">TOP</div>' : ''}
 
-      <img src="${p.imagen_url}">
+      <img src="${obtenerUrlImagen(p.imagen_url)}">
       <b>${p.nombre}</b>
       <p>$${p.precio}</p>
       <small>${p.categorias?.nombre || ""}</small>
@@ -240,12 +254,21 @@ async function eliminarProducto(id) {
 
 // EDITAR
 function editarProducto(id) {
-  const p = document.querySelectorAll(".producto-card")[id-1]; // simple
+  const p = productosGlobal.find(x => x.id === id);
 
-  document.getElementById("editNombre").value = p.children[2].innerText;
-  document.getElementById("editPrecio").value = p.children[3].innerText.replace("$","");
+  if (!p) {
+    mostrarMensaje("Producto no encontrado", "error");
+    return;
+  }
 
   cargarCategoriasEnModal();
+
+  document.getElementById("editNombre").value = p.nombre;
+  document.getElementById("editPrecio").value = p.precio;
+  document.getElementById("editCategoria").value = p.categoria_id;
+  document.getElementById("editDestacado").checked = p.destacado;
+  document.getElementById("editOferta").checked = p.oferta;
+
   productoEditando = id;
 
   document.getElementById("modalEditar").style.display = "block";
