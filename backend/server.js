@@ -4,6 +4,7 @@ import express from "express";
 import dotenv from "dotenv";
 import fileUpload from "express-fileupload";
 import { supabase } from "./config/supabase.js";
+console.log("🔥 DEPLOY NUEVO ACTIVO");
 
 dotenv.config();
 
