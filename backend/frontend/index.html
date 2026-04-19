@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DistriWest Admin</title>
+
+  <style>
+    body {
+      font-family: Arial;
+    }
+
+    #listaProductos {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .producto-card {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 10px;
+      background: white;
+      text-align: center;
+      position: relative;
+      transition: 0.2s;
+    }
+
+    .producto-card:hover {
+      transform: scale(1.03);
+    }
+
+    .producto-card img {
+      width: 100%;
+      height: 90px;
+      object-fit: contain;
+      background: #f5f5f5;
+    }
+
+    #mensaje {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      display: none;
+      z-index: 999;
+      font-weight: bold;
+    }
+
+    .exito {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .oferta {
+      border: 2px solid #e53935;
+      background: #ffecec;
+    }
+
+    .destacado {
+      border: 2px solid #fbc02d;
+      background: #fff8e1;
+    }
+
+    .badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 4px 8px;
+      font-size: 11px;
+      color: white;
+      border-radius: 6px;
+    }
+
+    .badge-oferta { background: #e53935; }
+    .badge-destacado { background: #fbc02d; color: black; }
+
+    /* MODAL */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      width: 300px;
+      margin: 10% auto;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>DistriWest Panel</h1>
+<div id="mensaje"></div>
+
+<h2>Crear Categoría</h2>
+<input id="categoriaNombre" placeholder="Nombre categoría">
+<button onclick="crearCategoria()">Crear</button>
+
+<h2>Crear Producto</h2>
+<input id="nombre" placeholder="Nombre">
+<input id="precio" placeholder="Precio">
+<input type="file" id="imagen">
+<select id="categoriaId"></select>
+
+<br><br>
+<label>Destacado <input type="checkbox" id="destacado"></label>
+<label>Oferta <input type="checkbox" id="oferta"></label>
+
+<br><br>
+<button onclick="crearProducto()">Crear producto</button>
+
+<h2>Productos</h2>
+<div id="listaProductos"></div>
+
+<script>
+let productoEditando = null;
+
+// MENSAJE
+function mostrarMensaje(texto, tipo) {
+  const div = document.getElementById("mensaje");
+  div.textContent = texto;
+  div.className = tipo;
+  div.style.display = "block";
+
+  setTimeout(() => div.style.display = "none", 3000);
+}
+
+// CATEGORIAS
+async function cargarCategorias() {
+  const res = await fetch("http://localhost:3000/test-db");
+  const categorias = await res.json();
+
+  // SELECT PRINCIPAL
+  const select = document.getElementById("categoriaId");
+  select.innerHTML = "";
+
+  categorias.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat.id;
+    option.textContent = cat.nombre;
+    select.appendChild(option);
+  });
+
+  // 👉 GUARDAMOS EN GLOBAL
+  window.categoriasGlobal = categorias;
+}
+
+// CREAR CATEGORIA
+async function crearCategoria() {
+  const nombre = document.getElementById("categoriaNombre").value;
+
+  await fetch("http://localhost:3000/categorias", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ nombre })
+  });
+
+  mostrarMensaje("Categoría creada", "exito");
+  cargarCategorias();
+}
+
+// CREAR PRODUCTO
+async function crearProducto() {
+  try {
+    const file = document.getElementById("imagen").files[0];
+    let imagenUrl = null;
+
+    if (file) {
+      const formData = new FormData();
+      formData.append("imagen", file);
+
+      const uploadRes = await fetch("http://localhost:3000/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      const uploadData = await uploadRes.json();
+      imagenUrl = uploadData.url;
+    }
+
+    const data = {
+      nombre: document.getElementById("nombre").value,
+      precio: Number(document.getElementById("precio").value),
+      imagen_url: imagenUrl,
+      categoria_id: Number(document.getElementById("categoriaId").value),
+      destacado: document.getElementById("destacado").checked,
+      oferta: document.getElementById("oferta").checked
+    };
+
+    await fetch("http://localhost:3000/productos", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(data)
+    });
+
+    mostrarMensaje("Producto cargado", "exito");
+
+    document.getElementById("nombre").value = "";
+    document.getElementById("precio").value = "";
+    document.getElementById("imagen").value = "";
+
+    cargarProductos();
+
+  } catch {
+    mostrarMensaje("Error al cargar producto", "error");
+  }
+}
+
+// LISTAR
+async function cargarProductos() {
+  const res = await fetch("http://localhost:3000/productos");
+  const productos = await res.json();
+
+  const contenedor = document.getElementById("listaProductos");
+  contenedor.innerHTML = "";
+
+  productos.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "producto-card";
+
+    div.innerHTML = `
+      ${p.oferta ? '<div class="badge badge-oferta">OFERTA</div>' : ''}
+      ${p.destacado ? '<div class="badge badge-destacado">TOP</div>' : ''}
+
+      <img src="${p.imagen_url}">
+      <b>${p.nombre}</b>
+      <p>$${p.precio}</p>
+      <small>${p.categorias?.nombre || ""}</small>
+      <br><br>
+      <button onclick="editarProducto(${p.id})">Editar</button>
+      <button onclick="eliminarProducto(${p.id})">Eliminar</button>
+    `;
+
+    contenedor.appendChild(div);
+  });
+}
+
+// ELIMINAR
+async function eliminarProducto(id) {
+  if (!confirm("¿Eliminar producto?")) return;
+
+  await fetch(`http://localhost:3000/productos/${id}`, {
+    method: "DELETE"
+  });
+
+  cargarProductos();
+}
+
+// EDITAR (ABRIR MODAL)
+async function editarProducto(id) {
+  const res = await fetch("http://localhost:3000/productos");
+  const productos = await res.json();
+
+  const p = productos.find(x => x.id === id);
+
+  // 👉 cargar categorias en modal
+  cargarCategoriasEnModal(window.categoriasGlobal);
+
+  document.getElementById("editNombre").value = p.nombre;
+  document.getElementById("editPrecio").value = p.precio;
+  document.getElementById("editCategoria").value = p.categoria_id;
+  document.getElementById("editDestacado").checked = p.destacado;
+  document.getElementById("editOferta").checked = p.oferta;
+
+  productoEditando = id;
+
+  document.getElementById("modalEditar").style.display = "block";
+}
+
+// GUARDAR EDICION
+async function guardarEdicion() {
+  let imagenUrl = null;
+
+  const file = document.getElementById("editImagen").files[0];
+
+  if (file) {
+    const formData = new FormData();
+    formData.append("imagen", file);
+
+    const uploadRes = await fetch("http://localhost:3000/upload", {
+      method: "POST",
+      body: formData
+    });
+
+    const uploadData = await uploadRes.json();
+    imagenUrl = uploadData.url;
+  }
+
+  const data = {
+    nombre: document.getElementById("editNombre").value,
+    precio: Number(document.getElementById("editPrecio").value),
+    categoria_id: Number(document.getElementById("editCategoria").value),
+    destacado: document.getElementById("editDestacado").checked,
+    oferta: document.getElementById("editOferta").checked,
+    imagen_url: imagenUrl
+  };
+
+  await fetch(`http://localhost:3000/productos/${productoEditando}`, {
+    method: "PUT",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(data)
+  });
+
+  document.getElementById("modalEditar").style.display = "none";
+
+  mostrarMensaje("Producto actualizado", "exito");
+  cargarProductos();
+}
+
+function cargarCategoriasEnModal(categorias) {
+  const selectEdit = document.getElementById("editCategoria");
+
+  if (!selectEdit) return;
+
+  selectEdit.innerHTML = "";
+
+  categorias.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat.id;
+    option.textContent = cat.nombre;
+    selectEdit.appendChild(option);
+  });
+}
+
+window.onload = () => {
+  cargarCategorias();
+  cargarProductos();
+};
+</script>
+
+<!-- MODAL -->
+<div id="modalEditar" class="modal">
+  <div class="modal-content">
+    <h2>Editar producto</h2>
+
+    <input id="editNombre">
+    <input id="editPrecio">
+    <input type="file" id="editImagen">
+    <select id="editCategoria"></select>
+
+    <br><br>
+    <label>Destacado <input type="checkbox" id="editDestacado"></label>
+    <label>Oferta <input type="checkbox" id="editOferta"></label>
+
+    <br><br>
+    <button onclick="guardarEdicion()">Guardar</button>
+    <button onclick="document.getElementById('modalEditar').style.display='none'">Cancelar</button>
+  </div>
+</div>
+
+</body>
+</html>
