@@ -1,10 +1,10 @@
 {
   "name": "distriwest-backend",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "type": "module",
-  "main": "backend/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node backend/server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",
@@ -12,6 +12,6 @@
     "dotenv": "^16",
     "express": "^4",
     "express-fileupload": "^1",
-    "puppeteer-core": "^24.42.0"
+    "puppeteer-core": "^22"
   }
 }
