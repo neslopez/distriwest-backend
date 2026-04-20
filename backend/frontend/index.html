@@ -3,600 +3,160 @@
 <head>
   <title>DistriWest Admin</title>
 
-<<<<<<< HEAD
-<style>
-body {
-  font-family: Arial;
-  background: #eef2f7;
-  margin: 0;
-  padding: 20px;
-}
-=======
   <style>
-    body { font-family: Arial; }
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
+    body { font-family: Arial; background:#eef2f7; padding:20px; }
 
-/* HEADER */
-.header {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 25px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-}
-
-.header h1 {
-  margin: 0;
-  text-align: center;
-  color: #1976d2;
-}
-
-<<<<<<< HEAD
-/* ACCIONES */
-.acciones {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-=======
-    .producto-card:hover { transform: scale(1.03); }
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
-
-/* CONTENEDOR */
-.container {
-  max-width: 1100px;
-  margin: auto;
-}
-
-/* SECCIONES */
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 25px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-}
-
-<<<<<<< HEAD
-.card h2 {
-  margin-top: 0;
-}
-
-/* INPUTS */
-input, select {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  width: 180px;
-}
-
-/* FILE */
-input[type="file"] {
-  width: auto;
-}
-
-/* BOTONES */
-button {
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: none;
-  background: #1976d2;
-  color: white;
-  cursor: pointer;
-  transition: 0.2s;
-}
-=======
-    .exito { background-color: #d4edda; color: #155724; }
-    .error { background-color: #f8d7da; color: #721c24; }
-
-    .oferta { border: 2px solid #e53935; background: #ffecec; }
-    .destacado { border: 2px solid #fbc02d; background: #fff8e1; }
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
-
-button:hover {
-  background: #125ea2;
-}
-
-/* GRID PRODUCTOS */
-#listaProductos {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
-}
-
-<<<<<<< HEAD
-/* CARD PRODUCTO */
-.producto-card {
-  background: white;
-  border-radius: 12px;
-  padding: 12px;
-  text-align: center;
-  position: relative;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  transition: 0.2s;
-}
-
-.producto-card:hover {
-  transform: translateY(-5px);
-}
-
-/* IMAGEN */
-.producto-card img {
-  width: 100%;
-  height: 140px;
-  object-fit: contain;
-  background: #f5f5f5;
-  border-radius: 8px;
-}
-
-/* BADGES */
-.badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  padding: 4px 8px;
-  font-size: 11px;
-  color: white;
-  border-radius: 6px;
-}
-
-.badge-oferta { background: #e53935; }
-.badge-destacado { background: #fbc02d; color: black; }
-
-/* TEXTO */
-.producto-card b {
-  display: block;
-  margin-top: 8px;
-}
-
-.producto-card p {
-  margin: 5px 0;
-  font-weight: bold;
-  color: #2e7d32;
-}
-</style>
-=======
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
+    .card {
+      background:white;
+      padding:20px;
+      border-radius:10px;
+      margin-bottom:20px;
     }
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
+    button {
+      padding:10px;
+      background:#1976d2;
+      color:white;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+    }
+
+    #listaProductos {
+      display:grid;
+      grid-template-columns: repeat(auto-fill,minmax(200px,1fr));
+      gap:15px;
+    }
+
+    .producto-card {
+      background:white;
+      padding:10px;
+      border-radius:10px;
+      text-align:center;
+    }
+
+    img {
+      width:100%;
+      height:120px;
+      object-fit:contain;
+    }
+  </style>
 </head>
 
 <body>
 
-<header class="header">
-  <h1>DistriWest Panel</h1>
-
-  <div class="acciones">
-    <input type="text" id="buscador" placeholder="Buscar producto...">
-
-    <select id="orden">
-      <option value="">Ordenar</option>
-      <option value="precio_asc">Precio ↑</option>
-      <option value="precio_desc">Precio ↓</option>
-      <option value="nombre">Nombre</option>
-    </select>
-
-    <button onclick="generarPDF()">📄 PDF</button>
-  </div>
-</header>
-
-<div class="container">
+<h1>DistriWest</h1>
 
 <div class="card">
-  <h2>Crear Categoría</h2>
-  <input id="categoriaNombre" placeholder="Nombre categoría">
+  <input id="categoriaNombre" placeholder="Categoría">
   <button onclick="crearCategoria()">Crear</button>
 </div>
 
 <div class="card">
-  <h2>Crear Producto</h2>
+  <input id="nombre" placeholder="Nombre">
+  <input id="precio" placeholder="Precio">
+  <input type="file" id="imagen">
+  <select id="categoriaId"></select>
 
-  <div style="display:flex; flex-wrap:wrap; gap:10px;">
-    <input id="nombre" placeholder="Nombre">
-    <input id="precio" placeholder="Precio">
-    <input type="file" id="imagen">
-    <select id="categoriaId"></select>
-  </div>
+  <label>Oferta <input type="checkbox" id="oferta"></label>
+  <label>Top <input type="checkbox" id="destacado"></label>
 
-  <div style="margin-top:10px;">
-    <label>Destacado <input type="checkbox" id="destacado"></label>
-    <label>Oferta <input type="checkbox" id="oferta"></label>
-  </div>
-
-  <br>
-  <button id="btnGuardar" onclick="guardarProducto()">Crear producto</button>
+  <button onclick="crearProducto()">Guardar</button>
 </div>
 
-<div class="card">
-  <h2>Productos</h2>
-  <div id="listaProductos"></div>
-</div>
+<button onclick="generarPDF()">GENERAR PDF</button>
 
-</div>
+<div id="listaProductos"></div>
 
 <script>
 const API = "https://distriwest-backend-production.up.railway.app";
 
-<<<<<<< HEAD
-let productosGlobal = [];
-let categoriasGlobal = [];
-=======
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
-let productoEditando = null;
-let productosGlobal = [];
-let categoriasGlobal = [];
-
-<<<<<<< HEAD
-// 🔧 NORMALIZADOR DE URL
-function obtenerUrlImagen(url) {
-  if (!url) return "";
-  if (url.startsWith("http")) return url;
-  return API + url;
-=======
-// MENSAJE
-function mostrarMensaje(texto, tipo) {
-  const div = document.getElementById("mensaje");
-  div.textContent = texto;
-  div.className = tipo;
-  div.style.display = "block";
-  setTimeout(() => div.style.display = "none", 3000);
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
-}
-
-// 📦 CARGAR CATEGORIAS
 async function cargarCategorias() {
-  const res = await fetch(API + "/test-db");
-<<<<<<< HEAD
-  categoriasGlobal = await res.json();
+  const res = await fetch(API + "/categorias");
+  const data = await res.json();
 
-=======
-  const categorias = await res.json();
-
-  categoriasGlobal = categorias;
-
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
   const select = document.getElementById("categoriaId");
   select.innerHTML = "";
 
-  categoriasGlobal.forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat.id;
-    option.textContent = cat.nombre;
-    select.appendChild(option);
+  data.forEach(c => {
+    const op = document.createElement("option");
+    op.value = c.id;
+    op.textContent = c.nombre;
+    select.appendChild(op);
   });
 }
 
-// ➕ CREAR CATEGORIA
 async function crearCategoria() {
   const nombre = document.getElementById("categoriaNombre").value;
 
   await fetch(API + "/categorias", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
     body: JSON.stringify({ nombre })
   });
 
   cargarCategorias();
 }
 
-// ➕ CREAR PRODUCTO
 async function crearProducto() {
-<<<<<<< HEAD
   let imagenUrl = null;
   const file = document.getElementById("imagen").files[0];
-=======
-  try {
-    let imagenUrl = null;
-    const file = document.getElementById("imagen").files[0];
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
   if (file) {
-    const formData = new FormData();
-    formData.append("imagen", file);
+    const form = new FormData();
+    form.append("imagen", file);
 
-<<<<<<< HEAD
     const res = await fetch(API + "/upload", {
-=======
-      const uploadRes = await fetch(API + "/upload", {
-        method: "POST",
-        body: formData
-      });
-
-      const uploadData = await uploadRes.json();
-      imagenUrl = uploadData.url;
-    }
-
-    const data = {
-      nombre: document.getElementById("nombre").value,
-      precio: Number(document.getElementById("precio").value),
-      categoria_id: Number(document.getElementById("categoriaId").value),
-      destacado: document.getElementById("destacado").checked,
-      oferta: document.getElementById("oferta").checked
-    };
-
-    if (imagenUrl) data.imagen_url = imagenUrl;
-
-    await fetch(API + "/productos", {
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
-      method: "POST",
-      body: formData
+      method:"POST",
+      body: form
     });
 
     const data = await res.json();
     imagenUrl = data.url;
   }
-
-  const producto = {
-    nombre: document.getElementById("nombre").value,
-    precio: Number(document.getElementById("precio").value),
-    categoria_id: Number(document.getElementById("categoriaId").value),
-    destacado: document.getElementById("destacado").checked,
-    oferta: document.getElementById("oferta").checked,
-    imagen_url: imagenUrl
-  };
 
   await fetch(API + "/productos", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(producto)
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      nombre: nombre.value,
+      precio: Number(precio.value),
+      categoria_id: Number(categoriaId.value),
+      imagen_url: imagenUrl,
+      oferta: oferta.checked,
+      destacado: destacado.checked
+    })
   });
 
   cargarProductos();
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-// 📦 CARGAR PRODUCTOS
-=======
-=======
-
-// LISTAR
 async function cargarProductos() {
   const res = await fetch(API + "/productos");
-  productosGlobal = await res.json();
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
+  const data = await res.json();
 
-// LISTAR
->>>>>>> ed0a1f5 (FORCE DEPLOY)
-async function cargarProductos() {
-  const res = await fetch(API + "/productos");
-  productosGlobal = await res.json();
-  renderProductos();
-}
+  const cont = document.getElementById("listaProductos");
+  cont.innerHTML = "";
 
-// 🎨 RENDER
-function renderProductos() {
-  const contenedor = document.getElementById("listaProductos");
-  contenedor.innerHTML = "";
-
-<<<<<<< HEAD
-  let productos = [...productosGlobal];
-
-  // 🔎 BUSCAR
-  const texto = document.getElementById("buscador").value.toLowerCase();
-  if (texto) {
-    productos = productos.filter(p =>
-      p.nombre.toLowerCase().includes(texto)
-    );
-  }
-
-  // 🔽 ORDENAR
-  const orden = document.getElementById("orden").value;
-
-  if (orden === "precio_asc") productos.sort((a,b)=>a.precio-b.precio);
-  if (orden === "precio_desc") productos.sort((a,b)=>b.precio-a.precio);
-  if (orden === "nombre") productos.sort((a,b)=>a.nombre.localeCompare(b.nombre));
-
-  productos.forEach(p => {
-=======
-  productosGlobal.forEach(p => {
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
-    const div = document.createElement("div");
-    div.className = "producto-card";
-
-    div.innerHTML = `
-      ${p.oferta ? '<div class="badge badge-oferta">OFERTA</div>' : ''}
-      ${p.destacado ? '<div class="badge badge-destacado">TOP</div>' : ''}
-
-      <img src="${p.imagen_url}">
-      <b>${p.nombre}</b>
-      <p>$${p.precio}</p>
-      <small>${p.categorias?.nombre || ""}</small>
-      <br><br>
-      <div style="display:flex; gap:5px; justify-content:center;">
-  <button onclick="editarProducto(${p.id})">Editar</button>
-  <button onclick="eliminarProducto(${p.id})">Eliminar</button>
-</div>
+  data.forEach(p => {
+    cont.innerHTML += `
+      <div class="producto-card">
+        <img src="${p.imagen_url}">
+        <b>${p.nombre}</b>
+        <p>$${p.precio}</p>
+      </div>
     `;
-
-    contenedor.appendChild(div);
   });
 }
 
-// ❌ ELIMINAR
-async function eliminarProducto(id) {
-<<<<<<< HEAD
-  await fetch(API + "/productos/" + id, { method: "DELETE" });
-  cargarProductos();
-}
-
-// 📄 PDF
 function generarPDF() {
-  window.open(API + "/generar-pdf", "_blank");
-}
-
-// 🚀 INIT
-window.onload = () => {
-  cargarCategorias();
-  cargarProductos();
-
-  document.getElementById("buscador").addEventListener("input", renderProductos);
-  document.getElementById("orden").addEventListener("change", renderProductos);
-};
-=======
-  if (!confirm("¿Eliminar producto?")) return;
-
-  await fetch(API + "/productos/" + id, { method: "DELETE" });
-
-  cargarProductos();
-}
-
-// EDITAR
-function editarProducto(id) {
-  const p = productosGlobal.find(x => x.id === id);
-
-  if (!p) {
-    mostrarMensaje("Producto no encontrado", "error");
-    return;
-  }
-
-  cargarCategoriasEnModal();
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
-
-function editarProducto(id) {
-  const p = productosGlobal.find(x => x.id === id);
-
-  if (!p) return;
-
-  // 👉 cargamos en el form de arriba
-  document.getElementById("nombre").value = p.nombre;
-  document.getElementById("precio").value = p.precio;
-  document.getElementById("categoriaId").value = p.categoria_id;
-  document.getElementById("destacado").checked = p.destacado;
-  document.getElementById("oferta").checked = p.oferta;
-
-  productoEditando = id;
-
-  mostrarModoEdicion();
-}
-
-<<<<<<< HEAD
-async function guardarProducto() {
-  let imagenUrl = null;
-  const file = document.getElementById("imagen").files[0];
-=======
-// MODAL CATEGORIAS
-function cargarCategoriasEnModal() {
-  const select = document.getElementById("editCategoria");
-  select.innerHTML = "";
-
-  categoriasGlobal.forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat.id;
-    option.textContent = cat.nombre;
-    select.appendChild(option);
-  });
-}
-
-// GUARDAR EDICION
-async function guardarEdicion() {
-  let imagenUrl = null;
-  const file = document.getElementById("editImagen").files[0];
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
-
-  if (file) {
-    const formData = new FormData();
-    formData.append("imagen", file);
-
-    const res = await fetch(API + "/upload", {
-      method: "POST",
-      body: formData
-    });
-
-<<<<<<< HEAD
-    const data = await res.json();
-    imagenUrl = data.url;
-  }
-
-  const data = {
-    nombre: document.getElementById("nombre").value,
-    precio: Number(document.getElementById("precio").value),
-    categoria_id: Number(document.getElementById("categoriaId").value),
-    destacado: document.getElementById("destacado").checked,
-    oferta: document.getElementById("oferta").checked
-  };
-
-  if (imagenUrl) data.imagen_url = imagenUrl;
-
-  if (productoEditando) {
-    // ✏️ EDITAR
-    await fetch(API + "/productos/" + productoEditando, {
-      method: "PUT",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(data)
-    });
-
-  } else {
-    // ➕ CREAR
-    await fetch(API + "/productos", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(data)
-    });
-  }
-
-  limpiarFormulario();
-  cargarProductos();
-}
-
-function limpiarFormulario() {
-  document.getElementById("nombre").value = "";
-  document.getElementById("precio").value = "";
-  document.getElementById("imagen").value = "";
-  document.getElementById("destacado").checked = false;
-  document.getElementById("oferta").checked = false;
-
-  productoEditando = null;
-
-  document.getElementById("btnGuardar").textContent = "Crear producto";
-}
-
-function mostrarModoEdicion() {
-  document.getElementById("btnGuardar").textContent = "Actualizar producto";
-}
-
-=======
-    const dataUpload = await res.json();
-    imagenUrl = dataUpload.url;
-  }
-
-  const data = {
-    nombre: document.getElementById("editNombre").value,
-    precio: Number(document.getElementById("editPrecio").value),
-    categoria_id: Number(document.getElementById("editCategoria").value),
-    destacado: document.getElementById("editDestacado").checked,
-    oferta: document.getElementById("editOferta").checked
-  };
-
-  if (imagenUrl !== null) {
-  data.imagen_url = imagenUrl;
-}
-
-  await fetch(API + "/productos/" + productoEditando, {
-    method: "PUT",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(data)
-  });
-
-  mostrarMensaje("Producto actualizado", "exito");
-  document.getElementById("modalEditar").style.display = "none";
-
-  cargarProductos();
+  window.open(API + "/generar-pdf");
 }
 
 window.onload = () => {
   cargarCategorias();
   cargarProductos();
 };
->>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 </script>
 
 </body>
