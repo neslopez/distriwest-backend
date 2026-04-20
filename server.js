@@ -1,26 +1,35 @@
 
+import dotenv from "dotenv";
+
+// 🔥 CARGAR VARIABLES (IMPORTANTE)
+dotenv.config({ path: "./backend/.env" });
+
 import cors from "cors";
 import express from "express";
 import fileUpload from "express-fileupload";
 import puppeteer from "puppeteer-core";
-import { supabase } from "./config/supabase.js";
+import { supabase } from "./backend/config/supabase.js";
 
 const app = express();
+
+// 🔧 CONFIGURACIÓN RAILWAY
 app.set("trust proxy", 1);
+
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type"]
 }));
+
 app.use(express.json());
 app.use(fileUpload());
 
-// HOME
+// 🏠 HOME
 app.get("/", (req, res) => {
   res.send("Servidor funcionando 🚀");
 });
 
-// CATEGORIAS
+// 📂 CATEGORIAS
 app.get("/categorias", async (req, res) => {
   const { data, error } = await supabase.from("categorias").select("*");
   if (error) return res.status(500).json(error);
@@ -39,7 +48,53 @@ app.post("/categorias", async (req, res) => {
   res.json(data);
 });
 
-// SUBIR IMAGEN
+// 📦 PRODUCTOS
+app.get("/productos", async (req, res) => {
+  const { data, error } = await supabase
+    .from("productos")
+    .select(`*, categorias(nombre)`);
+
+  if (error) return res.status(500).json(error);
+  res.json(data);
+});
+
+app.post("/productos", async (req, res) => {
+  const { nombre, precio, imagen_url, categoria_id, destacado, oferta } = req.body;
+
+  const { data, error } = await supabase
+    .from("productos")
+    .insert([{ nombre, precio, imagen_url, categoria_id, destacado, oferta }])
+    .select();
+
+  if (error) return res.status(500).json(error);
+  res.json(data);
+});
+
+app.put("/productos/:id", async (req, res) => {
+  const { id } = req.params;
+
+  const { error } = await supabase
+    .from("productos")
+    .update(req.body)
+    .eq("id", id);
+
+  if (error) return res.status(500).json(error);
+  res.json({ ok: true });
+});
+
+app.delete("/productos/:id", async (req, res) => {
+  const { id } = req.params;
+
+  const { error } = await supabase
+    .from("productos")
+    .delete()
+    .eq("id", id);
+
+  if (error) return res.status(500).json(error);
+  res.json({ ok: true });
+});
+
+// 📤 SUBIR IMAGEN
 app.post("/upload", async (req, res) => {
   try {
     if (!req.files || !req.files.imagen) {
@@ -69,53 +124,7 @@ app.post("/upload", async (req, res) => {
   }
 });
 
-// PRODUCTOS
-app.post("/productos", async (req, res) => {
-  const { nombre, precio, imagen_url, categoria_id, destacado, oferta } = req.body;
-
-  const { data, error } = await supabase
-    .from("productos")
-    .insert([{ nombre, precio, imagen_url, categoria_id, destacado, oferta }])
-    .select();
-
-  if (error) return res.status(500).json(error);
-  res.json(data);
-});
-
-app.get("/productos", async (req, res) => {
-  const { data, error } = await supabase
-    .from("productos")
-    .select(`*, categorias(nombre)`);
-
-  if (error) return res.status(500).json(error);
-  res.json(data);
-});
-
-app.delete("/productos/:id", async (req, res) => {
-  const { id } = req.params;
-
-  const { error } = await supabase
-    .from("productos")
-    .delete()
-    .eq("id", id);
-
-  if (error) return res.status(500).json(error);
-  res.json({ ok: true });
-});
-
-app.put("/productos/:id", async (req, res) => {
-  const { id } = req.params;
-
-  const { error } = await supabase
-    .from("productos")
-    .update(req.body)
-    .eq("id", id);
-
-  if (error) return res.status(500).json(error);
-  res.json({ ok: true });
-});
-
-// 📄 PDF PRO
+// 📄 GENERAR PDF
 app.get("/generar-pdf", async (req, res) => {
   const { data, error } = await supabase
     .from("productos")
@@ -255,6 +264,7 @@ app.get("/generar-pdf", async (req, res) => {
   res.send(pdf);
 });
 
+// 🚀 SERVER
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, "0.0.0.0", () => {
