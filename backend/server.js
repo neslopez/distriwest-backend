@@ -12,7 +12,11 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+<<<<<<< HEAD
 app.use(fileUpload());
+=======
+app.use(fileUpload()); // ✅ BIEN ubicado
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
 // 👉 HOME
 app.get("/", (req, res) => {
@@ -39,7 +43,11 @@ app.post("/categorias", async (req, res) => {
   res.json(data);
 });
 
+<<<<<<< HEAD
 // 👉 SUBIR IMAGEN
+=======
+// 👉 SUBIR IMAGEN (SUPABASE STORAGE)
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 app.post("/upload", async (req, res) => {
   try {
     if (!req.files || !req.files.imagen) {
@@ -47,12 +55,17 @@ app.post("/upload", async (req, res) => {
     }
 
     const file = req.files.imagen;
+<<<<<<< HEAD
     const safeName = file.name.replace(/\s+/g, "_");
     const fileName = Date.now() + "-" + safeName;
+=======
+    const fileName = Date.now() + "-" + file.name;
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
     const { error } = await supabase.storage
       .from("productos")
       .upload(fileName, file.data, {
+<<<<<<< HEAD
         contentType: file.mimetype,
         upsert: true
       });
@@ -64,13 +77,31 @@ app.post("/upload", async (req, res) => {
       .getPublicUrl(fileName);
 
     res.json({ url: data.publicUrl });
+=======
+        contentType: file.mimetype
+      });
+
+    if (error) {
+      return res.status(500).json(error);
+    }
+
+    const { data: publicUrl } = supabase.storage
+      .from("productos")
+      .getPublicUrl(fileName);
+
+    res.json({ url: publicUrl.publicUrl });
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
   } catch (err) {
     res.status(500).json({ error: "Error subiendo imagen" });
   }
 });
 
+<<<<<<< HEAD
 // 👉 PRODUCTOS
+=======
+// 👉 CREAR PRODUCTO
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 app.post("/productos", async (req, res) => {
   const { nombre, precio, imagen_url, categoria_id, destacado, oferta } = req.body;
 
@@ -116,7 +147,13 @@ app.put("/productos/:id", async (req, res) => {
     oferta
   };
 
+<<<<<<< HEAD
   if (imagen_url) updateData.imagen_url = imagen_url;
+=======
+  if (imagen_url) {
+    updateData.imagen_url = imagen_url;
+  }
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
   const { data, error } = await supabase
     .from("productos")
@@ -145,6 +182,7 @@ app.get("/generar-pdf", async (req, res) => {
   });
 
   let html = `
+<<<<<<< HEAD
 <html>
 <head>
   <style>
@@ -244,12 +282,32 @@ app.get("/generar-pdf", async (req, res) => {
 
   html += `</tr></table>`;
 }
+=======
+    <html>
+    <body style="font-family: Arial; padding:20px;">
+      <h1>DistriWest</h1>
+  `;
+
+  for (const categoria in agrupados) {
+    html += `<h2>${categoria}</h2>`;
+
+    agrupados[categoria].forEach(p => {
+      html += `
+        <div style="margin-bottom:10px;">
+          <img src="${p.imagen_url}" width="100"/>
+          <p>${p.nombre} - $${p.precio}</p>
+        </div>
+      `;
+    });
+  }
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
   html += `</body></html>`;
 
   const browser = await puppeteer.launch({
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
+<<<<<<< HEAD
 
   const page = await browser.newPage();
 
@@ -264,6 +322,13 @@ app.get("/generar-pdf", async (req, res) => {
     printBackground: true,
     margin: { top: "10mm", bottom: "10mm" }
   });
+=======
+
+  const page = await browser.newPage();
+  await page.setContent(html);
+
+  const pdf = await page.pdf({ format: "A4" });
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
   await browser.close();
 

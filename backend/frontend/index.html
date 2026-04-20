@@ -3,6 +3,7 @@
 <head>
   <title>DistriWest Admin</title>
 
+<<<<<<< HEAD
 <style>
 body {
   font-family: Arial;
@@ -10,6 +11,10 @@ body {
   margin: 0;
   padding: 20px;
 }
+=======
+  <style>
+    body { font-family: Arial; }
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
 /* HEADER */
 .header {
@@ -26,6 +31,7 @@ body {
   color: #1976d2;
 }
 
+<<<<<<< HEAD
 /* ACCIONES */
 .acciones {
   display: flex;
@@ -34,6 +40,9 @@ body {
   justify-content: center;
   flex-wrap: wrap;
 }
+=======
+    .producto-card:hover { transform: scale(1.03); }
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
 /* CONTENEDOR */
 .container {
@@ -50,6 +59,7 @@ body {
   box-shadow: 0 4px 15px rgba(0,0,0,0.08);
 }
 
+<<<<<<< HEAD
 .card h2 {
   margin-top: 0;
 }
@@ -77,6 +87,13 @@ button {
   cursor: pointer;
   transition: 0.2s;
 }
+=======
+    .exito { background-color: #d4edda; color: #155724; }
+    .error { background-color: #f8d7da; color: #721c24; }
+
+    .oferta { border: 2px solid #e53935; background: #ffecec; }
+    .destacado { border: 2px solid #fbc02d; background: #fff8e1; }
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
 button:hover {
   background: #125ea2;
@@ -89,6 +106,7 @@ button:hover {
   gap: 20px;
 }
 
+<<<<<<< HEAD
 /* CARD PRODUCTO */
 .producto-card {
   background: white;
@@ -139,6 +157,15 @@ button:hover {
   color: #2e7d32;
 }
 </style>
+=======
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+    }
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
 </head>
 
@@ -198,22 +225,44 @@ button:hover {
 <script>
 const API = "https://distriwest-backend-production.up.railway.app";
 
+<<<<<<< HEAD
 let productosGlobal = [];
 let categoriasGlobal = [];
+=======
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 let productoEditando = null;
+let productosGlobal = [];
+let categoriasGlobal = [];
 
+<<<<<<< HEAD
 // 🔧 NORMALIZADOR DE URL
 function obtenerUrlImagen(url) {
   if (!url) return "";
   if (url.startsWith("http")) return url;
   return API + url;
+=======
+// MENSAJE
+function mostrarMensaje(texto, tipo) {
+  const div = document.getElementById("mensaje");
+  div.textContent = texto;
+  div.className = tipo;
+  div.style.display = "block";
+  setTimeout(() => div.style.display = "none", 3000);
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 }
 
 // 📦 CARGAR CATEGORIAS
 async function cargarCategorias() {
   const res = await fetch(API + "/test-db");
+<<<<<<< HEAD
   categoriasGlobal = await res.json();
 
+=======
+  const categorias = await res.json();
+
+  categoriasGlobal = categorias;
+
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
   const select = document.getElementById("categoriaId");
   select.innerHTML = "";
 
@@ -240,14 +289,43 @@ async function crearCategoria() {
 
 // ➕ CREAR PRODUCTO
 async function crearProducto() {
+<<<<<<< HEAD
   let imagenUrl = null;
   const file = document.getElementById("imagen").files[0];
+=======
+  try {
+    let imagenUrl = null;
+    const file = document.getElementById("imagen").files[0];
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
   if (file) {
     const formData = new FormData();
     formData.append("imagen", file);
 
+<<<<<<< HEAD
     const res = await fetch(API + "/upload", {
+=======
+      const uploadRes = await fetch(API + "/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      const uploadData = await uploadRes.json();
+      imagenUrl = uploadData.url;
+    }
+
+    const data = {
+      nombre: document.getElementById("nombre").value,
+      precio: Number(document.getElementById("precio").value),
+      categoria_id: Number(document.getElementById("categoriaId").value),
+      destacado: document.getElementById("destacado").checked,
+      oferta: document.getElementById("oferta").checked
+    };
+
+    if (imagenUrl) data.imagen_url = imagenUrl;
+
+    await fetch(API + "/productos", {
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
       method: "POST",
       body: formData
     });
@@ -275,8 +353,16 @@ async function crearProducto() {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // 📦 CARGAR PRODUCTOS
 =======
+=======
+
+// LISTAR
+async function cargarProductos() {
+  const res = await fetch(API + "/productos");
+  productosGlobal = await res.json();
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
 // LISTAR
 >>>>>>> ed0a1f5 (FORCE DEPLOY)
@@ -291,6 +377,7 @@ function renderProductos() {
   const contenedor = document.getElementById("listaProductos");
   contenedor.innerHTML = "";
 
+<<<<<<< HEAD
   let productos = [...productosGlobal];
 
   // 🔎 BUSCAR
@@ -309,6 +396,9 @@ function renderProductos() {
   if (orden === "nombre") productos.sort((a,b)=>a.nombre.localeCompare(b.nombre));
 
   productos.forEach(p => {
+=======
+  productosGlobal.forEach(p => {
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
     const div = document.createElement("div");
     div.className = "producto-card";
 
@@ -333,6 +423,7 @@ function renderProductos() {
 
 // ❌ ELIMINAR
 async function eliminarProducto(id) {
+<<<<<<< HEAD
   await fetch(API + "/productos/" + id, { method: "DELETE" });
   cargarProductos();
 }
@@ -350,6 +441,25 @@ window.onload = () => {
   document.getElementById("buscador").addEventListener("input", renderProductos);
   document.getElementById("orden").addEventListener("change", renderProductos);
 };
+=======
+  if (!confirm("¿Eliminar producto?")) return;
+
+  await fetch(API + "/productos/" + id, { method: "DELETE" });
+
+  cargarProductos();
+}
+
+// EDITAR
+function editarProducto(id) {
+  const p = productosGlobal.find(x => x.id === id);
+
+  if (!p) {
+    mostrarMensaje("Producto no encontrado", "error");
+    return;
+  }
+
+  cargarCategoriasEnModal();
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
 function editarProducto(id) {
   const p = productosGlobal.find(x => x.id === id);
@@ -368,9 +478,29 @@ function editarProducto(id) {
   mostrarModoEdicion();
 }
 
+<<<<<<< HEAD
 async function guardarProducto() {
   let imagenUrl = null;
   const file = document.getElementById("imagen").files[0];
+=======
+// MODAL CATEGORIAS
+function cargarCategoriasEnModal() {
+  const select = document.getElementById("editCategoria");
+  select.innerHTML = "";
+
+  categoriasGlobal.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat.id;
+    option.textContent = cat.nombre;
+    select.appendChild(option);
+  });
+}
+
+// GUARDAR EDICION
+async function guardarEdicion() {
+  let imagenUrl = null;
+  const file = document.getElementById("editImagen").files[0];
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 
   if (file) {
     const formData = new FormData();
@@ -381,6 +511,7 @@ async function guardarProducto() {
       body: formData
     });
 
+<<<<<<< HEAD
     const data = await res.json();
     imagenUrl = data.url;
   }
@@ -432,6 +563,40 @@ function mostrarModoEdicion() {
   document.getElementById("btnGuardar").textContent = "Actualizar producto";
 }
 
+=======
+    const dataUpload = await res.json();
+    imagenUrl = dataUpload.url;
+  }
+
+  const data = {
+    nombre: document.getElementById("editNombre").value,
+    precio: Number(document.getElementById("editPrecio").value),
+    categoria_id: Number(document.getElementById("editCategoria").value),
+    destacado: document.getElementById("editDestacado").checked,
+    oferta: document.getElementById("editOferta").checked
+  };
+
+  if (imagenUrl !== null) {
+  data.imagen_url = imagenUrl;
+}
+
+  await fetch(API + "/productos/" + productoEditando, {
+    method: "PUT",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(data)
+  });
+
+  mostrarMensaje("Producto actualizado", "exito");
+  document.getElementById("modalEditar").style.display = "none";
+
+  cargarProductos();
+}
+
+window.onload = () => {
+  cargarCategorias();
+  cargarProductos();
+};
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863
 </script>
 
 </body>

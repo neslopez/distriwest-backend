@@ -14,9 +14,16 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+<<<<<<< HEAD:backend/package.json
     "express-fileupload": "^1.4.0",
     "puppeteer": "^22.0.0"
   },
   "type": "module"
+=======
+    "express-fileupload": "^1.5.2",
+    "multer": "^2.1.1",
+    "puppeteer": "^24.41.0"
+  }
+>>>>>>> ed0a1f5a13a032a7cd19cb7d8101b5747b016863:package.json
 }
 
