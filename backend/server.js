@@ -1,4 +1,4 @@
-console.log("🔥 VERSION NUEVA PDF PRO");
+console.log("🚨 CAMBIO EXTREMO 🚨");
 import cors from "cors";
 import puppeteer from "puppeteer";
 import express from "express";
