@@ -1,17 +1,15 @@
-console.log("🔥 ESTE ES EL BACKEND REAL 🔥");
 import cors from "cors";
-import puppeteer from "puppeteer-core";
-
-const browser = await puppeteer.launch({
-  executablePath: '/usr/bin/chromium-browser',
-  args: ['--no-sandbox', '--disable-setuid-sandbox']
-});
 import express from "express";
 import dotenv from "dotenv";
 import fileUpload from "express-fileupload";
+import puppeteer from "puppeteer-core";
 import { supabase } from "./config/supabase.js";
 
 dotenv.config();
+
+console.log("🔥 BACKEND INICIADO 🔥");
+console.log("URL:", process.env.SUPABASE_URL);
+console.log("KEY:", process.env.SUPABASE_KEY ? "OK" : "NO DEFINIDA");
 
 const app = express();
 
@@ -132,7 +130,6 @@ app.get("/generar-pdf", async (req, res) => {
 
   if (error) return res.status(500).json(error);
 
-  // 🧠 Agrupar por categoría
   const agrupados = {};
 
   data.forEach(p => {
@@ -145,11 +142,7 @@ app.get("/generar-pdf", async (req, res) => {
   <html>
   <head>
     <style>
-      body {
-        font-family: Arial;
-        padding: 20px;
-      }
-
+      body { font-family: Arial; padding: 20px; }
       .portada {
         height: 90vh;
         display: flex;
@@ -158,27 +151,10 @@ app.get("/generar-pdf", async (req, res) => {
         flex-direction: column;
         page-break-after: always;
       }
-
-      .portada h1 {
-        font-size: 50px;
-        color: #1976d2;
-      }
-
-      .categoria {
-        page-break-before: always;
-      }
-
-      h2 {
-        border-bottom: 3px solid #1976d2;
-        padding-bottom: 5px;
-      }
-
-      .grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-
+      .portada h1 { font-size: 50px; color: #1976d2; }
+      .categoria { page-break-before: always; }
+      h2 { border-bottom: 3px solid #1976d2; padding-bottom: 5px; }
+      .grid { display: flex; flex-wrap: wrap; gap: 10px; }
       .card {
         width: 30%;
         border: 1px solid #ddd;
@@ -187,18 +163,8 @@ app.get("/generar-pdf", async (req, res) => {
         text-align: center;
         position: relative;
       }
-
-      img {
-        width: 100px;
-        height: 100px;
-        object-fit: contain;
-      }
-
-      .precio {
-        color: green;
-        font-weight: bold;
-      }
-
+      img { width: 100px; height: 100px; object-fit: contain; }
+      .precio { color: green; font-weight: bold; }
       .badge {
         position: absolute;
         top: 5px;
@@ -208,17 +174,10 @@ app.get("/generar-pdf", async (req, res) => {
         color: white;
         border-radius: 5px;
       }
-
-      .oferta {
-        background: red;
-      }
-
-      .destacado {
-        background: orange;
-      }
+      .oferta { background: red; }
+      .destacado { background: orange; }
     </style>
   </head>
-
   <body>
 
   <div class="portada">
@@ -227,7 +186,6 @@ app.get("/generar-pdf", async (req, res) => {
   </div>
   `;
 
-  // 📦 recorrer categorías
   for (const categoria in agrupados) {
     html += `<div class="categoria">`;
     html += `<h2>${categoria}</h2>`;
@@ -236,14 +194,11 @@ app.get("/generar-pdf", async (req, res) => {
     agrupados[categoria].forEach(p => {
       html += `
         <div class="card">
-
           ${p.oferta ? `<div class="badge oferta">OFERTA</div>` : ""}
           ${p.destacado ? `<div class="badge destacado">TOP</div>` : ""}
-
           <img src="${p.imagen_url}" />
           <p><b>${p.nombre}</b></p>
           <p class="precio">$${p.precio}</p>
-
         </div>
       `;
     });
@@ -254,18 +209,16 @@ app.get("/generar-pdf", async (req, res) => {
   html += `</body></html>`;
 
   const browser = await puppeteer.launch({
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    executablePath: '/usr/bin/chromium-browser',
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 
   const page = await browser.newPage();
-
-  await page.setViewport({ width: 1200, height: 1600 });
   await page.setContent(html, { waitUntil: "networkidle0" });
 
   const pdf = await page.pdf({
     format: "A4",
-    printBackground: true,
-    margin: { top: "10mm", bottom: "10mm" }
+    printBackground: true
   });
 
   await browser.close();
