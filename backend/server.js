@@ -1,19 +1,17 @@
+
 import cors from "cors";
 import express from "express";
-import dotenv from "dotenv";
 import fileUpload from "express-fileupload";
 import puppeteer from "puppeteer-core";
 import { supabase } from "./config/supabase.js";
 
-dotenv.config();
-
-console.log("🔥 BACKEND INICIADO 🔥");
-console.log("URL:", process.env.SUPABASE_URL);
-console.log("KEY:", process.env.SUPABASE_KEY ? "OK" : "NO DEFINIDA");
-
 const app = express();
-
-app.use(cors());
+app.set("trust proxy", 1);
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type"]
+}));
 app.use(express.json());
 app.use(fileUpload());
 
@@ -22,14 +20,13 @@ app.get("/", (req, res) => {
   res.send("Servidor funcionando 🚀");
 });
 
-// TEST DB
+// CATEGORIAS
 app.get("/categorias", async (req, res) => {
   const { data, error } = await supabase.from("categorias").select("*");
   if (error) return res.status(500).json(error);
   res.json(data);
 });
 
-// CREAR CATEGORIA
 app.post("/categorias", async (req, res) => {
   const { nombre } = req.body;
 
@@ -72,7 +69,7 @@ app.post("/upload", async (req, res) => {
   }
 });
 
-// CREAR PRODUCTO
+// PRODUCTOS
 app.post("/productos", async (req, res) => {
   const { nombre, precio, imagen_url, categoria_id, destacado, oferta } = req.body;
 
@@ -85,7 +82,6 @@ app.post("/productos", async (req, res) => {
   res.json(data);
 });
 
-// LISTAR PRODUCTOS
 app.get("/productos", async (req, res) => {
   const { data, error } = await supabase
     .from("productos")
@@ -95,7 +91,6 @@ app.get("/productos", async (req, res) => {
   res.json(data);
 });
 
-// ELIMINAR
 app.delete("/productos/:id", async (req, res) => {
   const { id } = req.params;
 
@@ -108,21 +103,19 @@ app.delete("/productos/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
-// EDITAR
 app.put("/productos/:id", async (req, res) => {
   const { id } = req.params;
-  const data = req.body;
 
   const { error } = await supabase
     .from("productos")
-    .update(data)
+    .update(req.body)
     .eq("id", id);
 
   if (error) return res.status(500).json(error);
   res.json({ ok: true });
 });
 
-// PDF PRO
+// 📄 PDF PRO
 app.get("/generar-pdf", async (req, res) => {
   const { data, error } = await supabase
     .from("productos")
@@ -142,7 +135,8 @@ app.get("/generar-pdf", async (req, res) => {
   <html>
   <head>
     <style>
-      body { font-family: Arial; padding: 20px; }
+      body { font-family: Arial; padding: 30px; }
+
       .portada {
         height: 90vh;
         display: flex;
@@ -151,33 +145,63 @@ app.get("/generar-pdf", async (req, res) => {
         flex-direction: column;
         page-break-after: always;
       }
-      .portada h1 { font-size: 50px; color: #1976d2; }
-      .categoria { page-break-before: always; }
-      h2 { border-bottom: 3px solid #1976d2; padding-bottom: 5px; }
-      .grid { display: flex; flex-wrap: wrap; gap: 10px; }
+
+      .portada h1 {
+        font-size: 60px;
+        color: #1976d2;
+      }
+
+      .categoria {
+        page-break-before: always;
+      }
+
+      h2 {
+        border-bottom: 4px solid #1976d2;
+        padding-bottom: 10px;
+      }
+
+      .grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
       .card {
         width: 30%;
-        border: 1px solid #ddd;
-        border-radius: 10px;
+        border: 1px solid #ccc;
+        border-radius: 12px;
         padding: 10px;
         text-align: center;
         position: relative;
       }
-      img { width: 100px; height: 100px; object-fit: contain; }
-      .precio { color: green; font-weight: bold; }
+
+      img {
+        width: 100%;
+        height: 120px;
+        object-fit: contain;
+      }
+
+      .precio {
+        font-size: 18px;
+        color: green;
+        font-weight: bold;
+      }
+
       .badge {
         position: absolute;
         top: 5px;
         left: 5px;
-        padding: 3px 6px;
+        padding: 4px 8px;
         font-size: 10px;
         color: white;
         border-radius: 5px;
       }
+
       .oferta { background: red; }
       .destacado { background: orange; }
     </style>
   </head>
+
   <body>
 
   <div class="portada">
@@ -209,8 +233,8 @@ app.get("/generar-pdf", async (req, res) => {
   html += `</body></html>`;
 
   const browser = await puppeteer.launch({
-    executablePath: '/usr/bin/chromium-browser',
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    executablePath: "/usr/bin/chromium-browser",
+    args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
 
   const page = await browser.newPage();
@@ -233,6 +257,6 @@ app.get("/generar-pdf", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log("Servidor corriendo en puerto", PORT);
 });
