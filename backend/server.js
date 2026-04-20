@@ -1,6 +1,11 @@
 console.log("🔥 ESTE ES EL BACKEND REAL 🔥");
 import cors from "cors";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+
+const browser = await puppeteer.launch({
+  executablePath: '/usr/bin/chromium-browser',
+  args: ['--no-sandbox', '--disable-setuid-sandbox']
+});
 import express from "express";
 import dotenv from "dotenv";
 import fileUpload from "express-fileupload";

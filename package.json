@@ -12,7 +12,6 @@
     "dotenv": "^16",
     "express": "^4",
     "express-fileupload": "^1",
-    "puppeteer": "^22"
-    
+    "puppeteer-core": "^24.42.0"
   }
 }
