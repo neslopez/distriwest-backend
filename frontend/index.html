@@ -218,17 +218,45 @@ const API = "https://distriwest-backend-production.up.railway.app";
 let productoEditandoId = null;
 let imagenActual = null;
 
-async function cargarCategorias() {
-  const res = await fetch(API + "/categorias");
-  const data = await res.json();
+async function crearCategoria() {
+  const categorias = await fetch("https://distriwest-backend-production.up.railway.app/categorias")
+  .then(r => r.json());
 
-  categoriaId.innerHTML = "";
-  editCategoria.innerHTML = "";
+const existe = categorias.some(c => c.nombre.toLowerCase() === nombre.toLowerCase());
 
-  data.forEach(c => {
-    categoriaId.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
-    editCategoria.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
-  });
+if (existe) {
+  alert("⚠️ Esa categoría ya existe");
+  return;
+}
+  const input = document.querySelector("#categoriaInput");
+  const nombre = input.value;
+
+  if (!nombre) {
+    alert("Ingresá un nombre de categoría");
+    return;
+  }
+
+  try {
+    const res = await fetch("https://distriwest-backend-production.up.railway.app/categorias", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre })
+    });
+
+    if (!res.ok) throw new Error("Error en el servidor");
+
+    const data = await res.json();
+
+    // ✅ MENSAJE CLAVE
+    alert("✅ Categoría creada correctamente");
+
+    // limpiar input
+    input.value = "";
+
+  } catch (error) {
+    alert("❌ Error al crear categoría");
+    console.error(error);
+  }
 }
 
 async function crearCategoria() {
