@@ -29,7 +29,7 @@ app.get("/", (req, res) => {
 });
 
 // ==========================
-// 📂 CATEGORIAS (FUERA DEL PDF)
+// 📂 CATEGORIAS
 // ==========================
 app.get("/categorias", async (req, res) => {
   const { data, error } = await supabase.from("categorias").select("*");
@@ -50,7 +50,7 @@ app.post("/categorias", async (req, res) => {
 });
 
 // ==========================
-// 📦 PRODUCTOS (FUERA DEL PDF)
+// 📦 PRODUCTOS
 // ==========================
 app.get("/productos", async (req, res) => {
   const { data, error } = await supabase
@@ -145,9 +145,10 @@ app.get("/generar-pdf", async (req, res) => {
 
     doc.pipe(res);
 
+    // =====================
     // 🟦 PORTADA
+    // =====================
     doc.rect(0, 0, 600, 800).fill("#f4f6fa");
-
     doc.rect(0, 0, 600, 60).fill("#0d47a1");
 
     doc.fillColor("white")
@@ -178,16 +179,20 @@ app.get("/generar-pdf", async (req, res) => {
         align: "center"
       });
 
+    // ✅ FIX REAL (sin romper página)
+    doc.moveDown(8);
     doc.fillColor("#aaa")
       .fontSize(9)
-      .text("Precios sujetos a modificación sin previo aviso", 0, 750, {
+      .text("Precios sujetos a modificación sin previo aviso", {
         align: "center"
       });
 
-    // 👉 recién ahora nueva página
+    // 👉 nueva página
     doc.addPage();
 
+    // =====================
     // AGRUPAR
+    // =====================
     const agrupados = {};
     productos.forEach(p => {
       const cat = p.categorias?.nombre || "Sin categoría";
@@ -197,7 +202,12 @@ app.get("/generar-pdf", async (req, res) => {
 
     const categorias = Object.keys(agrupados);
 
-    for (const categoria of categorias) {
+    // =====================
+    // RECORRER
+    // =====================
+    for (let i = 0; i < categorias.length; i++) {
+
+      const categoria = categorias[i];
 
       doc.rect(0, 0, 600, 40).fill("#0d47a1");
       doc.fillColor("white").fontSize(12).text("DISTRIWEST - Catálogo", 20, 12);
@@ -232,10 +242,11 @@ app.get("/generar-pdf", async (req, res) => {
           } catch {}
         }
 
-        doc.fontSize(11).text(p.nombre, x + 10, y + 95, {
-          width: CARD_WIDTH - 20,
-          align: "center"
-        });
+        doc.fontSize(11).fillColor("#000")
+          .text(p.nombre, x + 10, y + 95, {
+            width: CARD_WIDTH - 20,
+            align: "center"
+          });
 
         doc.fontSize(18).fillColor("#2e7d32")
           .text(`$${p.precio}`, x + 10, y + 115, {
@@ -268,7 +279,10 @@ app.get("/generar-pdf", async (req, res) => {
         }
       }
 
-      doc.addPage();
+      // ✅ FIX: no agregar página al final
+      if (i < categorias.length - 1) {
+        doc.addPage();
+      }
     }
 
     doc.end();
