@@ -7,6 +7,7 @@ import cors from "cors";
 import express from "express";
 import fileUpload from "express-fileupload";
 import PDFDocument from "pdfkit";
+import fetch from "node-fetch";
 import { supabase } from "./backend/config/supabase.js";
 
 const app = express();
@@ -169,59 +170,75 @@ app.get("/generar-pdf", async (req, res) => {
     productos.forEach((p, index) => {
 
       // 🧱 CARD
-      doc
-        .roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 10)
-        .stroke("#ccc");
+doc
+  .roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 10)
+  .stroke("#ccc");
 
-      // 🏷 BADGES
-      if (p.oferta) {
-        doc
-          .rect(x + 5, y + 5, 50, 15)
-          .fill("#e53935")
-          .fillColor("white")
-          .fontSize(8)
-          .text("OFERTA", x + 10, y + 8);
+// 🖼 IMAGEN (clave)
+if (p.imagen_url) {
+  try {
+    const response = await fetch(p.imagen_url);
+    const buffer = await response.arrayBuffer();
 
-        doc.fillColor("black");
-      }
+    doc.image(Buffer.from(buffer), x + 20, y + 10, {
+      width: 120,
+      height: 60,
+      align: "center"
+    });
+  } catch (e) {
+    console.log("Error imagen");
+  }
+}
 
-      if (p.destacado) {
-        doc
-          .rect(x + CARD_WIDTH - 55, y + 5, 50, 15)
-          .fill("#fb8c00")
-          .fillColor("white")
-          .fontSize(8)
-          .text("TOP", x + CARD_WIDTH - 45, y + 8);
+// 🏷 BADGES
+if (p.oferta) {
+  doc
+    .rect(x + 5, y + 5, 50, 15)
+    .fill("#e53935")
+    .fillColor("white")
+    .fontSize(8)
+    .text("OFERTA", x + 10, y + 8);
 
-        doc.fillColor("black");
-      }
+  doc.fillColor("black");
+}
 
-      // 🏷 NOMBRE
-      doc
-        .fontSize(11)
-        .fillColor("#000")
-        .text(p.nombre, x + 10, y + 40, {
-          width: CARD_WIDTH - 20,
-          align: "center"
-        });
+if (p.destacado) {
+  doc
+    .rect(x + CARD_WIDTH - 55, y + 5, 50, 15)
+    .fill("#fb8c00")
+    .fillColor("white")
+    .fontSize(8)
+    .text("TOP", x + CARD_WIDTH - 45, y + 8);
 
-      // 💰 PRECIO
-      doc
-        .fontSize(12)
-        .fillColor("#2e7d32")
-        .text(`$${p.precio}`, x + 10, y + 65, {
-          width: CARD_WIDTH - 20,
-          align: "center"
-        });
+  doc.fillColor("black");
+}
 
-      // 📦 CATEGORÍA
-      doc
-        .fontSize(8)
-        .fillColor("#777")
-        .text(p.categorias?.nombre || "", x + 10, y + 95, {
-          width: CARD_WIDTH - 20,
-          align: "center"
-        });
+// 🏷 NOMBRE
+doc
+  .fontSize(10)
+  .fillColor("#000")
+  .text(p.nombre, x + 10, y + 80, {
+    width: CARD_WIDTH - 20,
+    align: "center"
+  });
+
+// 💰 PRECIO (más protagonista)
+doc
+  .fontSize(14)
+  .fillColor("#2e7d32")
+  .text(`$${p.precio}`, x + 10, y + 100, {
+    width: CARD_WIDTH - 20,
+    align: "center"
+  });
+
+// 📦 CATEGORÍA
+doc
+  .fontSize(7)
+  .fillColor("#777")
+  .text(p.categorias?.nombre || "", x + 10, y + 120, {
+    width: CARD_WIDTH - 20,
+    align: "center"
+  });
 
       // 📅 FECHA
       doc
