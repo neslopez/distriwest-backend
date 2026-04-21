@@ -129,7 +129,7 @@ app.post("/upload", async (req, res) => {
 
 
 // 📄 PDF PROFESIONAL
-//import PDFDocument from "pdfkit";
+import PDFDocument from "pdfkit";
 
 app.get("/generar-pdf", async (req, res) => {
   try {
@@ -137,7 +137,6 @@ app.get("/generar-pdf", async (req, res) => {
       .from("productos")
       .select(`*, categorias(nombre)`);
 
-    // 🔥 AGRUPAR POR CATEGORIA
     const categorias = {};
 
     productos.forEach(p => {
@@ -153,7 +152,7 @@ app.get("/generar-pdf", async (req, res) => {
 
     doc.pipe(res);
 
-    // 🎯 HEADER
+    // HEADER
     doc
       .fontSize(22)
       .fillColor("#0d47a1")
@@ -166,115 +165,102 @@ app.get("/generar-pdf", async (req, res) => {
 
     doc.moveDown(2);
 
-    let pageX = 30;
-    let pageY = 120;
-    let col = 0;
-    let row = 0;
-    let count = 0;
-
-    const CARD_WIDTH = 170;
-    const CARD_HEIGHT = 150;
+    const CARD_W = 170;
+    const CARD_H = 180;
 
     Object.keys(categorias).forEach(cat => {
 
-      // 🧱 NUEVA PÁGINA POR CATEGORÍA
       doc.addPage();
 
-      // 📦 TITULO CATEGORIA
       doc
         .fontSize(16)
         .fillColor("#0d47a1")
         .text(cat, 30, 40);
 
-      pageX = 30;
-      pageY = 80;
-      col = 0;
-      row = 0;
-      count = 0;
+      let col = 0;
+      let row = 0;
+      let count = 0;
 
       categorias[cat].forEach(p => {
 
-        // 📄 SALTO CADA 9 PRODUCTOS
         if (count === 9) {
           doc.addPage();
-
-          doc
-            .fontSize(16)
-            .fillColor("#0d47a1")
-            .text(cat, 30, 40);
-
-          pageX = 30;
-          pageY = 80;
+          doc.fontSize(16).fillColor("#0d47a1").text(cat, 30, 40);
           col = 0;
           row = 0;
           count = 0;
         }
 
-        const x = pageX + col * (CARD_WIDTH + 10);
-        const y = pageY + row * (CARD_HEIGHT + 10);
+        const x = 30 + col * (CARD_W + 10);
+        const y = 80 + row * (CARD_H + 10);
 
-        // 🧱 CARD
+        // CARD
         doc
-          .roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 10)
+          .roundedRect(x, y, CARD_W, CARD_H, 10)
           .stroke("#cccccc");
+
+        // 🔴 BADGES
+        if (p.oferta) {
+          doc
+            .rect(x + 8, y + 8, 50, 14)
+            .fill("#e53935")
+            .fillColor("white")
+            .fontSize(8)
+            .text("OFERTA", x + 12, y + 11);
+        }
+
+        if (p.destacado) {
+          doc
+            .rect(x + CARD_W - 58, y + 8, 45, 14)
+            .fill("#fb8c00")
+            .fillColor("white")
+            .fontSize(8)
+            .text("TOP", x + CARD_W - 52, y + 11);
+        }
+
+        // 🖼 IMAGEN
+        if (p.imagen_url) {
+          try {
+            doc.image(p.imagen_url, x + 35, y + 30, {
+              width: 100,
+              height: 80,
+              fit: [100, 80],
+              align: "center"
+            });
+          } catch (e) {
+            // si falla la imagen no rompe
+          }
+        }
 
         // 🏷 NOMBRE
         doc
           .fontSize(11)
           .fillColor("black")
-          .text(p.nombre, x + 10, y + 10, {
-            width: CARD_WIDTH - 20,
+          .text(p.nombre, x + 10, y + 115, {
+            width: CARD_W - 20,
             align: "center"
           });
 
-        // 💰 PRECIO
+        // 💰 PRECIO (BIEN CENTRADO)
         doc
-          .fontSize(12)
+          .fontSize(13)
           .fillColor("#2e7d32")
-          .text(`$${p.precio}`, x + 10, y + 30, {
+          .text(`$${p.precio}`, x + 10, y + 135, {
+            width: CARD_W - 20,
             align: "center"
           });
-
-        // 🔥 BADGES
-        if (p.oferta) {
-          doc
-            .fontSize(8)
-            .fillColor("white")
-            .rect(x + 5, y + 5, 45, 12)
-            .fill("#e53935")
-            .fillColor("white")
-            .text("OFERTA", x + 8, y + 7);
-        }
-
-        if (p.destacado) {
-          doc
-            .fontSize(8)
-            .fillColor("white")
-            .rect(x + CARD_WIDTH - 50, y + 5, 40, 12)
-            .fill("#fb8c00")
-            .fillColor("white")
-            .text("TOP", x + CARD_WIDTH - 45, y + 7);
-        }
 
         // 📦 CATEGORIA
         doc
           .fontSize(8)
           .fillColor("gray")
-          .text(p.categorias?.nombre || "", x + 10, y + 110, {
+          .text(p.categorias?.nombre || "", x + 10, y + 155, {
+            width: CARD_W - 20,
             align: "center"
           });
 
-        // 📅 FECHA
-        doc
-          .fontSize(7)
-          .fillColor("gray")
-          .text(new Date().toLocaleDateString(), x + 10, y + 125, {
-            align: "center"
-          });
-
-        // ➡️ POSICIONAMIENTO GRID
+        // GRID
         col++;
-
         if (col === 3) {
           col = 0;
           row++;
