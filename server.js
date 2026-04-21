@@ -29,101 +29,6 @@ app.get("/", (req, res) => {
   res.send("Servidor funcionando 🚀");
 });
 
-// 📂 CATEGORIAS
-app.get("/categorias", async (req, res) => {
-  const { data, error } = await supabase.from("categorias").select("*");
-  if (error) return res.status(500).json(error);
-  res.json(data);
-});
-
-app.post("/categorias", async (req, res) => {
-  const { nombre } = req.body;
-
-  const { data, error } = await supabase
-    .from("categorias")
-    .insert([{ nombre }])
-    .select();
-
-  if (error) return res.status(500).json(error);
-  res.json(data);
-});
-
-// 📦 PRODUCTOS
-app.get("/productos", async (req, res) => {
-  const { data, error } = await supabase
-    .from("productos")
-    .select(`*, categorias(nombre)`);
-
-  if (error) return res.status(500).json(error);
-  res.json(data);
-});
-
-app.post("/productos", async (req, res) => {
-  const { nombre, precio, imagen_url, categoria_id, destacado, oferta } = req.body;
-
-  const { data, error } = await supabase
-    .from("productos")
-    .insert([{ nombre, precio, imagen_url, categoria_id, destacado, oferta }])
-    .select();
-
-  if (error) return res.status(500).json(error);
-  res.json(data);
-});
-
-app.put("/productos/:id", async (req, res) => {
-  const { id } = req.params;
-
-  const { error } = await supabase
-    .from("productos")
-    .update(req.body)
-    .eq("id", id);
-
-  if (error) return res.status(500).json(error);
-  res.json({ ok: true });
-});
-
-app.delete("/productos/:id", async (req, res) => {
-  const { id } = req.params;
-
-  const { error } = await supabase
-    .from("productos")
-    .delete()
-    .eq("id", id);
-
-  if (error) return res.status(500).json(error);
-  res.json({ ok: true });
-});
-
-// 📤 SUBIR IMAGEN
-app.post("/upload", async (req, res) => {
-  try {
-    if (!req.files || !req.files.imagen) {
-      return res.status(400).json({ error: "No hay imagen" });
-    }
-
-    const file = req.files.imagen;
-    const fileName = Date.now() + "-" + file.name.replace(/\s+/g, "_");
-
-    const { error } = await supabase.storage
-      .from("productos")
-      .upload(fileName, file.data, {
-        contentType: file.mimetype,
-        upsert: true,
-      });
-
-    if (error) return res.status(500).json(error);
-
-    const { data } = supabase.storage
-      .from("productos")
-      .getPublicUrl(fileName);
-
-    res.json({ url: data.publicUrl });
-
-  } catch (err) {
-    res.status(500).json({ error: "Error subiendo imagen" });
-  }
-});
-
 // ==========================
 // 📄 PDF NIVEL EMPRESA REAL
 // ==========================
@@ -181,9 +86,9 @@ app.get("/generar-pdf", async (req, res) => {
         align: "center"
       });
 
-    doc.addPage();
-
+    // =====================
     // 🔹 AGRUPAR
+    // =====================
     const agrupados = {};
     productos.forEach(p => {
       const cat = p.categorias?.nombre || "Sin categoría";
@@ -191,8 +96,19 @@ app.get("/generar-pdf", async (req, res) => {
       agrupados[cat].push(p);
     });
 
-    // 🔹 RECORRER
-    for (const categoria of Object.keys(agrupados)) {
+    const categorias = Object.keys(agrupados);
+
+    // =====================
+    // 🔁 RECORRER CATEGORÍAS
+    // =====================
+    for (let c = 0; c < categorias.length; c++) {
+
+      const categoria = categorias[c];
+
+      // 👉 SOLO crear nueva página si NO es la primera
+      doc.addPage();
+      doc.x = 40;
+      doc.y = 40;
 
       // HEADER
       doc.rect(0, 0, 600, 40).fill("#0d47a1");
@@ -255,10 +171,11 @@ app.get("/generar-pdf", async (req, res) => {
         }
 
         // NOMBRE
-        doc.fontSize(11).text(p.nombre, x + 10, y + 95, {
-          width: CARD_WIDTH - 20,
-          align: "center"
-        });
+        doc.fontSize(11).fillColor("#000")
+          .text(p.nombre, x + 10, y + 95, {
+            width: CARD_WIDTH - 20,
+            align: "center"
+          });
 
         // PRECIO
         doc.fontSize(18).fillColor("#2e7d32")
@@ -267,6 +184,7 @@ app.get("/generar-pdf", async (req, res) => {
             align: "center"
           });
 
+        // CATEGORIA
         doc.fillColor("#777")
           .fontSize(8)
           .text(categoria, x + 10, y + 140, {
@@ -284,15 +202,24 @@ app.get("/generar-pdf", async (req, res) => {
           x += CARD_WIDTH + GAP;
         }
 
+        // 👉 NUEVA PAGINA INTERNA
         if (y > 700 && index !== productosCat.length - 1) {
           doc.addPage();
+          doc.x = 40;
+          doc.y = 40;
+
+          doc.rect(0, 0, 600, 40).fill("#0d47a1");
+          doc.fillColor("white").fontSize(12).text("DISTRIWEST - Catálogo", 20, 12);
+
+          doc.fillColor("#0d47a1")
+            .fontSize(20)
+            .text(categoria, 40, 60);
+
           y = 100;
           x = 40 + offsetX;
           col = 0;
         }
       }
-
-      doc.addPage();
     }
 
     doc.end();
