@@ -7,12 +7,11 @@ import cors from "cors";
 import express from "express";
 import fileUpload from "express-fileupload";
 import PDFDocument from "pdfkit";
-import fetch from "node-fetch";
 import { supabase } from "./backend/config/supabase.js";
 
 const app = express();
 
-// 🔧 CONFIG
+// CONFIG
 app.set("trust proxy", 1);
 
 app.use(cors({
@@ -24,28 +23,14 @@ app.use(cors({
 app.use(express.json());
 app.use(fileUpload());
 
-// 🏠 HOME
+// HOME
 app.get("/", (req, res) => {
   res.send("Servidor funcionando 🚀");
 });
 
 // ==========================
-// 📄 PDF NIVEL EMPRESA REAL
+// 📂 CATEGORIAS (FUERA DEL PDF)
 // ==========================
-app.get("/generar-pdf", async (req, res) => {
-  try {
-    const { data: productos } = await supabase
-      .from("productos")
-      .select(`*, categorias(nombre)`);
-
-    const doc = new PDFDocument({ margin: 40 });
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "inline; filename=catalogo.pdf");
-
-    doc.pipe(res);
-
-    // 📂 CATEGORIAS
 app.get("/categorias", async (req, res) => {
   const { data, error } = await supabase.from("categorias").select("*");
   if (error) return res.status(500).json(error);
@@ -64,7 +49,9 @@ app.post("/categorias", async (req, res) => {
   res.json(data);
 });
 
-// 📦 PRODUCTOS
+// ==========================
+// 📦 PRODUCTOS (FUERA DEL PDF)
+// ==========================
 app.get("/productos", async (req, res) => {
   const { data, error } = await supabase
     .from("productos")
@@ -110,9 +97,55 @@ app.delete("/productos/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
-    // =====================
-    // 🟦 PORTADA PRO
-    // =====================
+// ==========================
+// 📤 SUBIR IMAGEN
+// ==========================
+app.post("/upload", async (req, res) => {
+  try {
+    if (!req.files || !req.files.imagen) {
+      return res.status(400).json({ error: "No hay imagen" });
+    }
+
+    const file = req.files.imagen;
+    const fileName = Date.now() + "-" + file.name.replace(/\s+/g, "_");
+
+    const { error } = await supabase.storage
+      .from("productos")
+      .upload(fileName, file.data, {
+        contentType: file.mimetype,
+        upsert: true,
+      });
+
+    if (error) return res.status(500).json(error);
+
+    const { data } = supabase.storage
+      .from("productos")
+      .getPublicUrl(fileName);
+
+    res.json({ url: data.publicUrl });
+
+  } catch (err) {
+    res.status(500).json({ error: "Error subiendo imagen" });
+  }
+});
+
+// ==========================
+// 📄 PDF NIVEL EMPRESA REAL
+// ==========================
+app.get("/generar-pdf", async (req, res) => {
+  try {
+    const { data: productos } = await supabase
+      .from("productos")
+      .select(`*, categorias(nombre)`);
+
+    const doc = new PDFDocument({ margin: 40 });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "inline; filename=catalogo.pdf");
+
+    doc.pipe(res);
+
+    // 🟦 PORTADA
     doc.rect(0, 0, 600, 800).fill("#f4f6fa");
 
     doc.rect(0, 0, 600, 60).fill("#0d47a1");
@@ -151,9 +184,10 @@ app.delete("/productos/:id", async (req, res) => {
         align: "center"
       });
 
-    // =====================
-    // 🔹 AGRUPAR
-    // =====================
+    // 👉 recién ahora nueva página
+    doc.addPage();
+
+    // AGRUPAR
     const agrupados = {};
     productos.forEach(p => {
       const cat = p.categorias?.nombre || "Sin categoría";
@@ -163,19 +197,8 @@ app.delete("/productos/:id", async (req, res) => {
 
     const categorias = Object.keys(agrupados);
 
-    // =====================
-    // 🔁 RECORRER CATEGORÍAS
-    // =====================
-    for (let c = 0; c < categorias.length; c++) {
+    for (const categoria of categorias) {
 
-      const categoria = categorias[c];
-
-      // 👉 SOLO crear nueva página si NO es la primera
-      doc.addPage();
-      doc.x = 40;
-      doc.y = 40;
-
-      // HEADER
       doc.rect(0, 0, 600, 40).fill("#0d47a1");
       doc.fillColor("white").fontSize(12).text("DISTRIWEST - Catálogo", 20, 12);
 
@@ -191,26 +214,13 @@ app.delete("/productos/:id", async (req, res) => {
       const CARD_HEIGHT = 170;
       const GAP = 20;
 
-      const itemsFila = Math.min(3, productosCat.length);
-      const totalWidth = itemsFila * CARD_WIDTH + (itemsFila - 1) * GAP;
-      const offsetX = (500 - totalWidth) / 2;
-
-      let x = 40 + offsetX;
+      let x = 40;
       let col = 0;
 
       for (const [index, p] of productosCat.entries()) {
 
-        // SOMBRA
-        doc.rect(x + 3, y + 3, CARD_WIDTH, CARD_HEIGHT)
-          .fillOpacity(0.05)
-          .fill("#000")
-          .fillOpacity(1);
+        doc.roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 12).stroke("#ddd");
 
-        // CARD
-        doc.roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 12)
-          .stroke("#ddd");
-
-        // IMAGEN
         if (p.imagen_url) {
           try {
             const response = await fetch(p.imagen_url);
@@ -222,34 +232,17 @@ app.delete("/productos/:id", async (req, res) => {
           } catch {}
         }
 
-        // BADGES
-        if (p.oferta) {
-          doc.rect(x + 5, y + 5, 50, 15).fill("#e53935");
-          doc.fillColor("white").fontSize(8).text("OFERTA", x + 10, y + 8);
-          doc.fillColor("black");
-        }
+        doc.fontSize(11).text(p.nombre, x + 10, y + 95, {
+          width: CARD_WIDTH - 20,
+          align: "center"
+        });
 
-        if (p.destacado) {
-          doc.rect(x + CARD_WIDTH - 55, y + 5, 50, 15).fill("#fb8c00");
-          doc.fillColor("white").fontSize(8).text("TOP", x + CARD_WIDTH - 45, y + 8);
-          doc.fillColor("black");
-        }
-
-        // NOMBRE
-        doc.fontSize(11).fillColor("#000")
-          .text(p.nombre, x + 10, y + 95, {
-            width: CARD_WIDTH - 20,
-            align: "center"
-          });
-
-        // PRECIO
         doc.fontSize(18).fillColor("#2e7d32")
           .text(`$${p.precio}`, x + 10, y + 115, {
             width: CARD_WIDTH - 20,
             align: "center"
           });
 
-        // CATEGORIA
         doc.fillColor("#777")
           .fontSize(8)
           .text(categoria, x + 10, y + 140, {
@@ -261,30 +254,21 @@ app.delete("/productos/:id", async (req, res) => {
 
         if (col === 3) {
           col = 0;
-          x = 40 + offsetX;
+          x = 40;
           y += CARD_HEIGHT + GAP;
         } else {
           x += CARD_WIDTH + GAP;
         }
 
-        // 👉 NUEVA PAGINA INTERNA
         if (y > 700 && index !== productosCat.length - 1) {
           doc.addPage();
-          doc.x = 40;
-          doc.y = 40;
-
-          doc.rect(0, 0, 600, 40).fill("#0d47a1");
-          doc.fillColor("white").fontSize(12).text("DISTRIWEST - Catálogo", 20, 12);
-
-          doc.fillColor("#0d47a1")
-            .fontSize(20)
-            .text(categoria, 40, 60);
-
           y = 100;
-          x = 40 + offsetX;
+          x = 40;
           col = 0;
         }
       }
+
+      doc.addPage();
     }
 
     doc.end();
@@ -295,7 +279,7 @@ app.delete("/productos/:id", async (req, res) => {
   }
 });
 
-// 🚀 SERVER
+// SERVER
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, "0.0.0.0", () => {
