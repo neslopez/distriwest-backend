@@ -7,7 +7,7 @@ dotenv.config({ path: "./backend/.env" });
 import cors from "cors";
 import express from "express";
 import fileUpload from "express-fileupload";
-import puppeteer from "puppeteer-core";
+//import puppeteer from "puppeteer-core";
 import { supabase } from "./backend/config/supabase.js";
 
 const app = express();
