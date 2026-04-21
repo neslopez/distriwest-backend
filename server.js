@@ -1,4 +1,4 @@
-console.log("🔥 VERSION FINAL PRO PDF 🔥");
+console.log("🔥 VERSION FINAL EMPRESA PDF 🔥");
 
 import dotenv from "dotenv";
 dotenv.config({ path: "./backend/.env" });
@@ -125,7 +125,7 @@ app.post("/upload", async (req, res) => {
 });
 
 // ==========================
-// 📄 PDF NIVEL EMPRESA
+// 📄 PDF NIVEL EMPRESA REAL
 // ==========================
 app.get("/generar-pdf", async (req, res) => {
   try {
@@ -140,32 +140,44 @@ app.get("/generar-pdf", async (req, res) => {
 
     doc.pipe(res);
 
-    // 🟦 PORTADA
-    doc
-      .fontSize(34)
-      .fillColor("#0d47a1")
-      .text("DISTRIWEST", { align: "center" });
+    // =====================
+    // 🟦 PORTADA PRO
+    // =====================
+    doc.rect(0, 0, 600, 800).fill("#f4f6fa");
 
-    doc.moveDown();
+    doc.rect(0, 0, 600, 60).fill("#0d47a1");
 
-    doc
-      .fontSize(16)
-      .fillColor("#333")
+    doc.fillColor("white")
+      .fontSize(22)
+      .text("DISTRIWEST", 0, 20, { align: "center" });
+
+    doc.fillColor("#0d47a1")
+      .fontSize(36)
+      .text("DISTRIWEST", 0, 220, { align: "center" });
+
+    doc.fillColor("#444")
+      .fontSize(18)
       .text("Distribuidora Mayorista", { align: "center" });
 
-    doc.moveDown(6);
+    doc.moveDown(3);
 
-    doc
-      .fontSize(12)
-      .fillColor("#777")
-      .text("Catálogo de productos", { align: "center" });
+    doc.moveTo(150, doc.y).lineTo(450, doc.y).stroke("#0d47a1");
 
-    doc.moveDown();
+    doc.moveDown(2);
 
-    doc
+    doc.fillColor("#333")
+      .fontSize(14)
+      .text("Catálogo de Productos", { align: "center" });
+
+    doc.fillColor("#888")
       .fontSize(10)
-      .fillColor("#999")
       .text("Actualizado: " + new Date().toLocaleDateString(), {
+        align: "center"
+      });
+
+    doc.fillColor("#aaa")
+      .fontSize(9)
+      .text("Precios sujetos a modificación sin previo aviso", 0, 750, {
         align: "center"
       });
 
@@ -182,12 +194,15 @@ app.get("/generar-pdf", async (req, res) => {
     // 🔹 RECORRER
     for (const categoria of Object.keys(agrupados)) {
 
-      doc
-        .fontSize(22)
-        .fillColor("#0d47a1")
-        .text(categoria);
+      // HEADER
+      doc.rect(0, 0, 600, 40).fill("#0d47a1");
+      doc.fillColor("white").fontSize(12).text("DISTRIWEST - Catálogo", 20, 12);
 
-      doc.moveDown();
+      doc.fillColor("#0d47a1")
+        .fontSize(20)
+        .text(categoria, 40, 60);
+
+      let y = 100;
 
       const productosCat = agrupados[categoria];
 
@@ -195,29 +210,23 @@ app.get("/generar-pdf", async (req, res) => {
       const CARD_HEIGHT = 170;
       const GAP = 20;
 
-      let col = 0;
-      let x = 40;
-      let y = doc.y;
-
-      // 👉 CENTRADO AUTOMÁTICO
       const itemsFila = Math.min(3, productosCat.length);
       const totalWidth = itemsFila * CARD_WIDTH + (itemsFila - 1) * GAP;
       const offsetX = (500 - totalWidth) / 2;
 
-      x += offsetX;
+      let x = 40 + offsetX;
+      let col = 0;
 
       for (const [index, p] of productosCat.entries()) {
 
         // SOMBRA
-        doc
-          .rect(x + 3, y + 3, CARD_WIDTH, CARD_HEIGHT)
+        doc.rect(x + 3, y + 3, CARD_WIDTH, CARD_HEIGHT)
           .fillOpacity(0.05)
           .fill("#000")
           .fillOpacity(1);
 
         // CARD
-        doc
-          .roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 12)
+        doc.roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 12)
           .stroke("#ddd");
 
         // IMAGEN
@@ -225,7 +234,6 @@ app.get("/generar-pdf", async (req, res) => {
           try {
             const response = await fetch(p.imagen_url);
             const buffer = await response.arrayBuffer();
-
             doc.image(Buffer.from(buffer), x + 20, y + 10, {
               width: 120,
               height: 70
@@ -247,33 +255,25 @@ app.get("/generar-pdf", async (req, res) => {
         }
 
         // NOMBRE
-        doc
-          .fontSize(11)
-          .fillColor("#000")
-          .text(p.nombre, x + 10, y + 95, {
-            width: CARD_WIDTH - 20,
-            align: "center"
-          });
+        doc.fontSize(11).text(p.nombre, x + 10, y + 95, {
+          width: CARD_WIDTH - 20,
+          align: "center"
+        });
 
-        // PRECIO (PROTAGONISTA)
-        doc
-          .fontSize(18)
-          .fillColor("#2e7d32")
+        // PRECIO
+        doc.fontSize(18).fillColor("#2e7d32")
           .text(`$${p.precio}`, x + 10, y + 115, {
             width: CARD_WIDTH - 20,
             align: "center"
           });
 
-        // CATEGORIA
-        doc
+        doc.fillColor("#777")
           .fontSize(8)
-          .fillColor("#777")
           .text(categoria, x + 10, y + 140, {
             width: CARD_WIDTH - 20,
             align: "center"
           });
 
-        // GRID
         col++;
 
         if (col === 3) {
@@ -284,19 +284,10 @@ app.get("/generar-pdf", async (req, res) => {
           x += CARD_WIDTH + GAP;
         }
 
-        // NUEVA PAGINA
         if (y > 700 && index !== productosCat.length - 1) {
           doc.addPage();
-
-          doc
-            .fontSize(22)
-            .fillColor("#0d47a1")
-            .text(categoria);
-
-          doc.moveDown();
-
+          y = 100;
           x = 40 + offsetX;
-          y = doc.y;
           col = 0;
         }
       }
