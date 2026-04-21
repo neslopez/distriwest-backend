@@ -138,118 +138,156 @@ app.get("/generar-pdf", async (req, res) => {
 
     doc.pipe(res);
 
-    // 🎯 HEADER
+    // =========================
+    // 🟦 PORTADA
+    // =========================
     doc
-      .fontSize(22)
+      .fontSize(28)
       .fillColor("#0d47a1")
       .text("DISTRIWEST", { align: "center" });
 
+    doc.moveDown();
+
     doc
-      .fontSize(12)
-      .fillColor("#555")
+      .fontSize(16)
+      .fillColor("#444")
       .text("Distribuidora Mayorista", { align: "center" });
 
-    doc.moveDown(2);
+    doc.moveDown(5);
 
-    let x = 40;
-    let y = 120;
-    let col = 0;
-    let count = 0;
+    doc
+      .fontSize(10)
+      .fillColor("#999")
+      .text("Catálogo actualizado: " + new Date().toLocaleDateString(), {
+        align: "center"
+      });
 
-    const CARD_WIDTH = 160;
-    const CARD_HEIGHT = 140;
-    const GAP = 20;
+    doc.addPage();
 
-    for (const [index, p] of productos.entries()) {
+    // =========================
+    // 📦 AGRUPAR POR CATEGORÍA
+    // =========================
+    const agrupados = {};
 
-      // 🧱 CARD
+    productos.forEach(p => {
+      const cat = p.categorias?.nombre || "Sin categoría";
+      if (!agrupados[cat]) agrupados[cat] = [];
+      agrupados[cat].push(p);
+    });
+
+    // =========================
+    // 🔁 RECORRER CATEGORÍAS
+    // =========================
+    for (const categoria of Object.keys(agrupados)) {
+
+      let x = 40;
+      let y = 120;
+      let col = 0;
+      let count = 0;
+
+      // 🟦 TITULO CATEGORIA
       doc
-        .roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 10)
-        .stroke("#ccc");
+        .fontSize(20)
+        .fillColor("#0d47a1")
+        .text(categoria, { align: "left" });
 
-      // 🖼 IMAGEN
-      if (p.imagen_url) {
-        try {
-          const response = await fetch(p.imagen_url);
-          const buffer = await response.arrayBuffer();
+      doc.moveDown();
 
-          doc.image(Buffer.from(buffer), x + 20, y + 10, {
-            width: 120,
-            height: 60
+      const productosCat = agrupados[categoria];
+
+      for (const [index, p] of productosCat.entries()) {
+
+        const CARD_WIDTH = 160;
+        const CARD_HEIGHT = 160;
+        const GAP = 20;
+
+        // 🧱 CARD
+        doc
+          .roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 10)
+          .stroke("#ddd");
+
+        // 🖼 IMAGEN
+        if (p.imagen_url) {
+          try {
+            const response = await fetch(p.imagen_url);
+            const buffer = await response.arrayBuffer();
+
+            doc.image(Buffer.from(buffer), x + 20, y + 10, {
+              width: 120,
+              height: 70
+            });
+          } catch {}
+        }
+
+        // 🏷 BADGES
+        if (p.oferta) {
+          doc.rect(x + 5, y + 5, 50, 15).fill("#e53935");
+          doc.fillColor("white").fontSize(8).text("OFERTA", x + 10, y + 8);
+          doc.fillColor("black");
+        }
+
+        if (p.destacado) {
+          doc.rect(x + CARD_WIDTH - 55, y + 5, 50, 15).fill("#fb8c00");
+          doc.fillColor("white").fontSize(8).text("TOP", x + CARD_WIDTH - 45, y + 8);
+          doc.fillColor("black");
+        }
+
+        // 🏷 NOMBRE
+        doc
+          .fontSize(10)
+          .fillColor("#000")
+          .text(p.nombre, x + 10, y + 90, {
+            width: CARD_WIDTH - 20,
+            align: "center"
           });
-        } catch (e) {
-          console.log("Error imagen:", p.imagen_url);
+
+        // 💰 PRECIO
+        doc
+          .fontSize(14)
+          .fillColor("#2e7d32")
+          .text(`$${p.precio}`, x + 10, y + 110, {
+            width: CARD_WIDTH - 20,
+            align: "center"
+          });
+
+        // 📦 CATEGORÍA
+        doc
+          .fontSize(7)
+          .fillColor("#777")
+          .text(categoria, x + 10, y + 130, {
+            width: CARD_WIDTH - 20,
+            align: "center"
+          });
+
+        // GRID
+        col++;
+        count++;
+
+        if (col === 3) {
+          col = 0;
+          x = 40;
+          y += CARD_HEIGHT + GAP;
+        } else {
+          x += CARD_WIDTH + GAP;
+        }
+
+        // NUEVA PAGINA
+        if (count === 9 && index !== productosCat.length - 1) {
+          doc.addPage();
+
+          x = 40;
+          y = 120;
+          col = 0;
+          count = 0;
+
+          doc
+            .fontSize(20)
+            .fillColor("#0d47a1")
+            .text(categoria);
         }
       }
 
-      // 🏷 BADGES
-      if (p.oferta) {
-        doc.rect(x + 5, y + 5, 50, 15).fill("#e53935");
-        doc.fillColor("white").fontSize(8).text("OFERTA", x + 10, y + 8);
-        doc.fillColor("black");
-      }
-
-      if (p.destacado) {
-        doc.rect(x + CARD_WIDTH - 55, y + 5, 50, 15).fill("#fb8c00");
-        doc.fillColor("white").fontSize(8).text("TOP", x + CARD_WIDTH - 45, y + 8);
-        doc.fillColor("black");
-      }
-
-      // 🏷 NOMBRE
-      doc
-        .fontSize(10)
-        .fillColor("#000")
-        .text(p.nombre, x + 10, y + 80, {
-          width: CARD_WIDTH - 20,
-          align: "center"
-        });
-
-      // 💰 PRECIO
-      doc
-        .fontSize(14)
-        .fillColor("#2e7d32")
-        .text(`$${p.precio}`, x + 10, y + 100, {
-          width: CARD_WIDTH - 20,
-          align: "center"
-        });
-
-      // 📦 CATEGORÍA
-      doc
-        .fontSize(7)
-        .fillColor("#777")
-        .text(p.categorias?.nombre || "", x + 10, y + 115, {
-          width: CARD_WIDTH - 20,
-          align: "center"
-        });
-
-      // ➡️ GRID
-      col++;
-      count++;
-
-      if (col === 3) {
-        col = 0;
-        x = 40;
-        y += CARD_HEIGHT + GAP;
-      } else {
-        x += CARD_WIDTH + GAP;
-      }
-
-      // 📄 PAGINACIÓN
-      if (count === 9 && index !== productos.length - 1) {
-        doc.addPage();
-
-        x = 40;
-        y = 120;
-        col = 0;
-        count = 0;
-
-        doc
-          .fontSize(18)
-          .fillColor("#0d47a1")
-          .text("DISTRIWEST", { align: "center" });
-
-        doc.moveDown(2);
-      }
+      doc.addPage();
     }
 
     doc.end();
