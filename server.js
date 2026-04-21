@@ -130,7 +130,7 @@ app.post("/upload", async (req, res) => {
 });
 
 // ==========================
-// 📄 PDF NIVEL EMPRESA REAL
+// 📄 PDF NIVEL EMPRESA REAL (MEJORADO)
 // ==========================
 app.get("/generar-pdf", async (req, res) => {
   try {
@@ -179,7 +179,6 @@ app.get("/generar-pdf", async (req, res) => {
         align: "center"
       });
 
-    // ✅ FIX REAL (sin romper página)
     doc.moveDown(8);
     doc.fillColor("#aaa")
       .fontSize(9)
@@ -187,7 +186,6 @@ app.get("/generar-pdf", async (req, res) => {
         align: "center"
       });
 
-    // 👉 nueva página
     doc.addPage();
 
     // =====================
@@ -229,8 +227,16 @@ app.get("/generar-pdf", async (req, res) => {
 
       for (const [index, p] of productosCat.entries()) {
 
-        doc.roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 12).stroke("#ddd");
+        // 🔥 BORDE DESTACADO SI ES OFERTA O TOP
+        if (p.oferta) {
+          doc.roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 12).stroke("#e53935");
+        } else if (p.destacado) {
+          doc.roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 12).stroke("#fb8c00");
+        } else {
+          doc.roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 12).stroke("#ddd");
+        }
 
+        // 🖼 IMAGEN
         if (p.imagen_url) {
           try {
             const response = await fetch(p.imagen_url);
@@ -242,18 +248,53 @@ app.get("/generar-pdf", async (req, res) => {
           } catch {}
         }
 
+        // 🔴 BADGE OFERTA
+        if (p.oferta) {
+          doc
+            .fillColor("#e53935")
+            .roundedRect(x + 8, y + 8, 50, 16, 4)
+            .fill();
+
+          doc
+            .fillColor("white")
+            .fontSize(8)
+            .text("OFERTA", x + 8, y + 11, {
+              width: 50,
+              align: "center"
+            });
+        }
+
+        // 🟠 BADGE TOP
+        if (p.destacado) {
+          doc
+            .fillColor("#fb8c00")
+            .roundedRect(x + CARD_WIDTH - 58, y + 8, 50, 16, 4)
+            .fill();
+
+          doc
+            .fillColor("white")
+            .fontSize(8)
+            .text("TOP", x + CARD_WIDTH - 58, y + 11, {
+              width: 50,
+              align: "center"
+            });
+        }
+
+        // 📦 NOMBRE
         doc.fontSize(11).fillColor("#000")
           .text(p.nombre, x + 10, y + 95, {
             width: CARD_WIDTH - 20,
             align: "center"
           });
 
+        // 💰 PRECIO
         doc.fontSize(18).fillColor("#2e7d32")
           .text(`$${p.precio}`, x + 10, y + 115, {
             width: CARD_WIDTH - 20,
             align: "center"
           });
 
+        // 🏷 CATEGORIA
         doc.fillColor("#777")
           .fontSize(8)
           .text(categoria, x + 10, y + 140, {
@@ -279,7 +320,6 @@ app.get("/generar-pdf", async (req, res) => {
         }
       }
 
-      // ✅ FIX: no agregar página al final
       if (i < categorias.length - 1) {
         doc.addPage();
       }
