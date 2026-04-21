@@ -125,9 +125,81 @@ app.post("/upload", async (req, res) => {
 });
 
 // 📄 GENERAR PDF
-app.get("/generar-pdf", (req, res) => {
-  console.log("🔥 ENTRE AL ENDPOINT PDF");
-  res.send("ok");
+import PDFDocument from "pdfkit";
+
+app.get("/generar-pdf", async (req, res) => {
+  try {
+    const { data: productos } = await supabase
+      .from("productos")
+      .select(`*, categorias(nombre)`);
+
+    const doc = new PDFDocument({ margin: 30 });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "inline; filename=catalogo.pdf");
+
+    doc.pipe(res);
+
+    // 🎯 HEADER
+    doc
+      .fontSize(20)
+      .text("DISTRIWEST", { align: "center" });
+
+    doc
+      .fontSize(12)
+      .text("Distribuidora Mayorista", { align: "center" });
+
+    doc.moveDown();
+
+    let x = 30;
+    let y = 100;
+    let count = 0;
+
+    productos.forEach((p) => {
+
+      // 📄 NUEVA PÁGINA CADA 9 PRODUCTOS
+      if (count === 9) {
+        doc.addPage();
+        x = 30;
+        y = 100;
+        count = 0;
+      }
+
+      // 🧱 CAJA
+      doc.rect(x, y, 150, 120).stroke();
+
+      // 🏷 NOMBRE
+      doc.fontSize(10).text(p.nombre, x + 5, y + 5);
+
+      // 💰 PRECIO
+      doc.text("$" + p.precio, x + 5, y + 20);
+
+      // 🔥 BADGES
+      if (p.oferta) doc.fillColor("red").text("OFERTA", x + 5, y + 35).fillColor("black");
+      if (p.destacado) doc.fillColor("orange").text("TOP", x + 5, y + 50).fillColor("black");
+
+      // 📦 CATEGORÍA
+      doc.fontSize(8).text(p.categorias?.nombre || "", x + 5, y + 70);
+
+      // 📅 FECHA
+      doc.text(new Date().toLocaleDateString(), x + 5, y + 85);
+
+      x += 170;
+
+      if (x > 400) {
+        x = 30;
+        y += 140;
+      }
+
+      count++;
+    });
+
+    doc.end();
+
+  } catch (err) {
+    console.log("ERROR PDF:", err);
+    res.status(500).send("Error generando PDF");
+  }
 });
 // 🚀 SERVER
 const PORT = process.env.PORT || 3000;
