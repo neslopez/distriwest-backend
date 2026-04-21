@@ -1,4 +1,4 @@
-console.log("🔥 SERVER NUEVO CARGADO");
+console.log("🔥 VERSION NUEVA PDF 🔥");
 
 import dotenv from "dotenv";
 dotenv.config({ path: "./backend/.env" });
@@ -129,7 +129,7 @@ app.post("/upload", async (req, res) => {
 
 
 // 📄 PDF PROFESIONAL
-import PDFDocument from "pdfkit";
+//import PDFDocument from "pdfkit";
 
 app.get("/generar-pdf", async (req, res) => {
   try {
