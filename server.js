@@ -1,4 +1,4 @@
-
+console.log("🔥 ESTE ES EL SERVER REAL 🔥");
 import dotenv from "dotenv";
 
 // 🔥 CARGAR VARIABLES (IMPORTANTE)
