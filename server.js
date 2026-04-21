@@ -24,12 +24,10 @@ app.use(cors({
 app.use(express.json());
 app.use(fileUpload());
 
-
 // 🏠 HOME
 app.get("/", (req, res) => {
   res.send("Servidor funcionando 🚀");
 });
-
 
 // 📂 CATEGORIAS
 app.get("/categorias", async (req, res) => {
@@ -49,7 +47,6 @@ app.post("/categorias", async (req, res) => {
   if (error) return res.status(500).json(error);
   res.json(data);
 });
-
 
 // 📦 PRODUCTOS
 app.get("/productos", async (req, res) => {
@@ -97,7 +94,6 @@ app.delete("/productos/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
-
 // 📤 SUBIR IMAGEN
 app.post("/upload", async (req, res) => {
   try {
@@ -128,10 +124,7 @@ app.post("/upload", async (req, res) => {
   }
 });
 
-
 // 📄 PDF PROFESIONAL
-//import PDFDocument from "pdfkit";
-
 app.get("/generar-pdf", async (req, res) => {
   try {
     const { data: productos } = await supabase
@@ -167,89 +160,69 @@ app.get("/generar-pdf", async (req, res) => {
     const CARD_HEIGHT = 140;
     const GAP = 20;
 
-    productos.forEach((p, index) => {
+    for (const [index, p] of productos.entries()) {
 
       // 🧱 CARD
-doc
-  .roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 10)
-  .stroke("#ccc");
-
-// 🖼 IMAGEN (clave)
-if (p.imagen_url) {
-  try {
-    const response = await fetch(p.imagen_url);
-    const buffer = await response.arrayBuffer();
-
-    doc.image(Buffer.from(buffer), x + 20, y + 10, {
-      width: 120,
-      height: 60,
-      align: "center"
-    });
-  } catch (e) {
-    console.log("Error imagen");
-  }
-}
-
-// 🏷 BADGES
-if (p.oferta) {
-  doc
-    .rect(x + 5, y + 5, 50, 15)
-    .fill("#e53935")
-    .fillColor("white")
-    .fontSize(8)
-    .text("OFERTA", x + 10, y + 8);
-
-  doc.fillColor("black");
-}
-
-if (p.destacado) {
-  doc
-    .rect(x + CARD_WIDTH - 55, y + 5, 50, 15)
-    .fill("#fb8c00")
-    .fillColor("white")
-    .fontSize(8)
-    .text("TOP", x + CARD_WIDTH - 45, y + 8);
-
-  doc.fillColor("black");
-}
-
-// 🏷 NOMBRE
-doc
-  .fontSize(10)
-  .fillColor("#000")
-  .text(p.nombre, x + 10, y + 80, {
-    width: CARD_WIDTH - 20,
-    align: "center"
-  });
-
-// 💰 PRECIO (más protagonista)
-doc
-  .fontSize(14)
-  .fillColor("#2e7d32")
-  .text(`$${p.precio}`, x + 10, y + 100, {
-    width: CARD_WIDTH - 20,
-    align: "center"
-  });
-
-// 📦 CATEGORÍA
-doc
-  .fontSize(7)
-  .fillColor("#777")
-  .text(p.categorias?.nombre || "", x + 10, y + 120, {
-    width: CARD_WIDTH - 20,
-    align: "center"
-  });
-
-      // 📅 FECHA
       doc
-        .fontSize(7)
-        .fillColor("#aaa")
-        .text(new Date().toLocaleDateString(), x + 10, y + 110, {
+        .roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 10)
+        .stroke("#ccc");
+
+      // 🖼 IMAGEN
+      if (p.imagen_url) {
+        try {
+          const response = await fetch(p.imagen_url);
+          const buffer = await response.arrayBuffer();
+
+          doc.image(Buffer.from(buffer), x + 20, y + 10, {
+            width: 120,
+            height: 60
+          });
+        } catch (e) {
+          console.log("Error imagen:", p.imagen_url);
+        }
+      }
+
+      // 🏷 BADGES
+      if (p.oferta) {
+        doc.rect(x + 5, y + 5, 50, 15).fill("#e53935");
+        doc.fillColor("white").fontSize(8).text("OFERTA", x + 10, y + 8);
+        doc.fillColor("black");
+      }
+
+      if (p.destacado) {
+        doc.rect(x + CARD_WIDTH - 55, y + 5, 50, 15).fill("#fb8c00");
+        doc.fillColor("white").fontSize(8).text("TOP", x + CARD_WIDTH - 45, y + 8);
+        doc.fillColor("black");
+      }
+
+      // 🏷 NOMBRE
+      doc
+        .fontSize(10)
+        .fillColor("#000")
+        .text(p.nombre, x + 10, y + 80, {
           width: CARD_WIDTH - 20,
           align: "center"
         });
 
-      // ➡️ POSICIÓN GRID
+      // 💰 PRECIO
+      doc
+        .fontSize(14)
+        .fillColor("#2e7d32")
+        .text(`$${p.precio}`, x + 10, y + 100, {
+          width: CARD_WIDTH - 20,
+          align: "center"
+        });
+
+      // 📦 CATEGORÍA
+      doc
+        .fontSize(7)
+        .fillColor("#777")
+        .text(p.categorias?.nombre || "", x + 10, y + 115, {
+          width: CARD_WIDTH - 20,
+          align: "center"
+        });
+
+      // ➡️ GRID
       col++;
       count++;
 
@@ -261,12 +234,12 @@ doc
         x += CARD_WIDTH + GAP;
       }
 
-      // 📄 NUEVA PÁGINA
+      // 📄 PAGINACIÓN
       if (count === 9 && index !== productos.length - 1) {
         doc.addPage();
 
         x = 40;
-        y = 40;
+        y = 120;
         col = 0;
         count = 0;
 
@@ -276,9 +249,8 @@ doc
           .text("DISTRIWEST", { align: "center" });
 
         doc.moveDown(2);
-        y = 120;
       }
-    });
+    }
 
     doc.end();
 
@@ -287,7 +259,6 @@ doc
     res.status(500).send("Error generando PDF");
   }
 });
-
 
 // 🚀 SERVER
 const PORT = process.env.PORT || 3000;
