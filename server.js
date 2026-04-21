@@ -45,6 +45,71 @@ app.get("/generar-pdf", async (req, res) => {
 
     doc.pipe(res);
 
+    // 📂 CATEGORIAS
+app.get("/categorias", async (req, res) => {
+  const { data, error } = await supabase.from("categorias").select("*");
+  if (error) return res.status(500).json(error);
+  res.json(data);
+});
+
+app.post("/categorias", async (req, res) => {
+  const { nombre } = req.body;
+
+  const { data, error } = await supabase
+    .from("categorias")
+    .insert([{ nombre }])
+    .select();
+
+  if (error) return res.status(500).json(error);
+  res.json(data);
+});
+
+// 📦 PRODUCTOS
+app.get("/productos", async (req, res) => {
+  const { data, error } = await supabase
+    .from("productos")
+    .select(`*, categorias(nombre)`);
+
+  if (error) return res.status(500).json(error);
+  res.json(data);
+});
+
+app.post("/productos", async (req, res) => {
+  const { nombre, precio, imagen_url, categoria_id, destacado, oferta } = req.body;
+
+  const { data, error } = await supabase
+    .from("productos")
+    .insert([{ nombre, precio, imagen_url, categoria_id, destacado, oferta }])
+    .select();
+
+  if (error) return res.status(500).json(error);
+  res.json(data);
+});
+
+app.put("/productos/:id", async (req, res) => {
+  const { id } = req.params;
+
+  const { error } = await supabase
+    .from("productos")
+    .update(req.body)
+    .eq("id", id);
+
+  if (error) return res.status(500).json(error);
+  res.json({ ok: true });
+});
+
+app.delete("/productos/:id", async (req, res) => {
+  const { id } = req.params;
+
+  const { error } = await supabase
+    .from("productos")
+    .delete()
+    .eq("id", id);
+
+  if (error) return res.status(500).json(error);
+  res.json({ ok: true });
+});
+
     // =====================
     // 🟦 PORTADA PRO
     // =====================
