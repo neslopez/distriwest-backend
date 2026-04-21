@@ -137,22 +137,14 @@ app.get("/generar-pdf", async (req, res) => {
       .from("productos")
       .select(`*, categorias(nombre)`);
 
-    const categorias = {};
-
-    productos.forEach(p => {
-      const cat = p.categorias?.nombre || "Sin categoría";
-      if (!categorias[cat]) categorias[cat] = [];
-      categorias[cat].push(p);
-    });
-
-    const doc = new PDFDocument({ margin: 30 });
+    const doc = new PDFDocument({ margin: 40 });
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "inline; filename=catalogo.pdf");
 
     doc.pipe(res);
 
-    // HEADER
+    // 🎯 HEADER
     doc
       .fontSize(22)
       .fillColor("#0d47a1")
@@ -160,114 +152,115 @@ app.get("/generar-pdf", async (req, res) => {
 
     doc
       .fontSize(12)
-      .fillColor("gray")
+      .fillColor("#555")
       .text("Distribuidora Mayorista", { align: "center" });
 
     doc.moveDown(2);
 
-    const CARD_W = 170;
-    const CARD_H = 180;
+    let x = 40;
+    let y = 120;
+    let col = 0;
+    let count = 0;
 
-    Object.keys(categorias).forEach(cat => {
+    const CARD_WIDTH = 160;
+    const CARD_HEIGHT = 140;
+    const GAP = 20;
 
-      doc.addPage();
+    productos.forEach((p, index) => {
 
+      // 🧱 CARD
       doc
-        .fontSize(16)
-        .fillColor("#0d47a1")
-        .text(cat, 30, 40);
+        .roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 10)
+        .stroke("#ccc");
 
-      let col = 0;
-      let row = 0;
-      let count = 0;
-
-      categorias[cat].forEach(p => {
-
-        if (count === 9) {
-          doc.addPage();
-          doc.fontSize(16).fillColor("#0d47a1").text(cat, 30, 40);
-          col = 0;
-          row = 0;
-          count = 0;
-        }
-
-        const x = 30 + col * (CARD_W + 10);
-        const y = 80 + row * (CARD_H + 10);
-
-        // CARD
+      // 🏷 BADGES
+      if (p.oferta) {
         doc
-          .roundedRect(x, y, CARD_W, CARD_H, 10)
-          .stroke("#cccccc");
-
-        // 🔴 BADGES
-        if (p.oferta) {
-          doc
-            .rect(x + 8, y + 8, 50, 14)
-            .fill("#e53935")
-            .fillColor("white")
-            .fontSize(8)
-            .text("OFERTA", x + 12, y + 11);
-        }
-
-        if (p.destacado) {
-          doc
-            .rect(x + CARD_W - 58, y + 8, 45, 14)
-            .fill("#fb8c00")
-            .fillColor("white")
-            .fontSize(8)
-            .text("TOP", x + CARD_W - 52, y + 11);
-        }
-
-        // 🖼 IMAGEN
-        if (p.imagen_url) {
-          try {
-            doc.image(p.imagen_url, x + 35, y + 30, {
-              width: 100,
-              height: 80,
-              fit: [100, 80],
-              align: "center"
-            });
-          } catch (e) {
-            // si falla la imagen no rompe
-          }
-        }
-
-        // 🏷 NOMBRE
-        doc
-          .fontSize(11)
-          .fillColor("black")
-          .text(p.nombre, x + 10, y + 115, {
-            width: CARD_W - 20,
-            align: "center"
-          });
-
-        // 💰 PRECIO (BIEN CENTRADO)
-        doc
-          .fontSize(13)
-          .fillColor("#2e7d32")
-          .text(`$${p.precio}`, x + 10, y + 135, {
-            width: CARD_W - 20,
-            align: "center"
-          });
-
-        // 📦 CATEGORIA
-        doc
+          .rect(x + 5, y + 5, 50, 15)
+          .fill("#e53935")
+          .fillColor("white")
           .fontSize(8)
-          .fillColor("gray")
-          .text(p.categorias?.nombre || "", x + 10, y + 155, {
-            width: CARD_W - 20,
-            align: "center"
-          });
+          .text("OFERTA", x + 10, y + 8);
 
-        // GRID
-        col++;
-        if (col === 3) {
-          col = 0;
-          row++;
-        }
+        doc.fillColor("black");
+      }
 
-        count++;
-      });
+      if (p.destacado) {
+        doc
+          .rect(x + CARD_WIDTH - 55, y + 5, 50, 15)
+          .fill("#fb8c00")
+          .fillColor("white")
+          .fontSize(8)
+          .text("TOP", x + CARD_WIDTH - 45, y + 8);
+
+        doc.fillColor("black");
+      }
+
+      // 🏷 NOMBRE
+      doc
+        .fontSize(11)
+        .fillColor("#000")
+        .text(p.nombre, x + 10, y + 40, {
+          width: CARD_WIDTH - 20,
+          align: "center"
+        });
+
+      // 💰 PRECIO
+      doc
+        .fontSize(12)
+        .fillColor("#2e7d32")
+        .text(`$${p.precio}`, x + 10, y + 65, {
+          width: CARD_WIDTH - 20,
+          align: "center"
+        });
+
+      // 📦 CATEGORÍA
+      doc
+        .fontSize(8)
+        .fillColor("#777")
+        .text(p.categorias?.nombre || "", x + 10, y + 95, {
+          width: CARD_WIDTH - 20,
+          align: "center"
+        });
+
+      // 📅 FECHA
+      doc
+        .fontSize(7)
+        .fillColor("#aaa")
+        .text(new Date().toLocaleDateString(), x + 10, y + 110, {
+          width: CARD_WIDTH - 20,
+          align: "center"
+        });
+
+      // ➡️ POSICIÓN GRID
+      col++;
+      count++;
+
+      if (col === 3) {
+        col = 0;
+        x = 40;
+        y += CARD_HEIGHT + GAP;
+      } else {
+        x += CARD_WIDTH + GAP;
+      }
+
+      // 📄 NUEVA PÁGINA
+      if (count === 9 && index !== productos.length - 1) {
+        doc.addPage();
+
+        x = 40;
+        y = 40;
+        col = 0;
+        count = 0;
+
+        doc
+          .fontSize(18)
+          .fillColor("#0d47a1")
+          .text("DISTRIWEST", { align: "center" });
+
+        doc.moveDown(2);
+        y = 120;
+      }
     });
 
     doc.end();
