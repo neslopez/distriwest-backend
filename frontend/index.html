@@ -1,51 +1,173 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>DistriWest Admin</title>
+  <title>DistriWest - Distribuidora Mayorista</title>
 
   <style>
-    body { font-family: Arial; background:#eef2f7; padding:20px; }
+    body {
+      font-family: Arial;
+      margin:0;
+      background:#f4f6fa;
+    }
 
-    .card {
-      background:white;
+    .header {
+      background:linear-gradient(135deg,#0d47a1,#1976d2);
+      color:white;
       padding:20px;
-      border-radius:10px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .header h1 {
+      margin:0;
+      font-size:28px;
+    }
+
+    .header span {
+      font-size:14px;
+      opacity:0.8;
+    }
+
+    .container {
+      padding:20px;
+    }
+
+    #buscador {
+      width:300px;
+      padding:10px;
+      border-radius:6px;
+      border:1px solid #ccc;
       margin-bottom:20px;
     }
 
+    input, select {
+      padding:8px;
+      margin:5px;
+      border-radius:6px;
+      border:1px solid #ccc;
+    }
+
     button {
-      padding:10px;
+      padding:8px 12px;
       background:#1976d2;
       color:white;
       border:none;
       border-radius:6px;
       cursor:pointer;
+      transition:0.2s;
     }
 
-    #listaProductos {
+    button:hover {
+      background:#0d47a1;
+    }
+
+    .card {
+      background:white;
+      padding:15px;
+      border-radius:10px;
+      margin-bottom:15px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .grid {
       display:grid;
-      grid-template-columns: repeat(auto-fill,minmax(200px,1fr));
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap:15px;
     }
 
     .producto-card {
       background:white;
-      padding:10px;
       border-radius:10px;
+      padding:10px;
       text-align:center;
+      position:relative;
+      box-shadow:0 3px 10px rgba(0,0,0,0.1);
+      transition:0.2s;
     }
 
-    img {
+    .producto-card:hover {
+      transform:translateY(-5px);
+    }
+
+    .producto-card img {
       width:100%;
       height:120px;
       object-fit:contain;
     }
+
+    .producto-card h4 {
+      margin:5px 0;
+      font-size:14px;
+    }
+
+    .producto-card p {
+      margin:0;
+      color:#2e7d32;
+      font-weight:bold;
+    }
+
+    .badge {
+      position:absolute;
+      top:8px;
+      left:8px;
+      font-size:10px;
+      padding:3px 6px;
+      border-radius:5px;
+      color:white;
+    }
+
+    .oferta { background:#e53935; }
+    .destacado { background:#fb8c00; }
+
+    .acciones button {
+      width:48%;
+      margin-top:5px;
+      font-size:12px;
+    }
+
+    .categoria {
+      margin-top:25px;
+      color:#0d47a1;
+    }
+
+    .modal {
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:rgba(0,0,0,0.5);
+      display:none;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .modal-content {
+      background:white;
+      padding:20px;
+      border-radius:10px;
+      width:300px;
+    }
+
+    #sinResultados {
+      text-align:center;
+      margin-top:20px;
+      color:#888;
+      display:none;
+    }
+
   </style>
 </head>
 
 <body>
 
-<h1>DistriWest</h1>
+<div class="header">
+  <h1>DistriWest</h1>
+  <span>Distribuidora Mayorista</span>
+</div>
+
+<div class="container">
+
+<input id="buscador" placeholder="Buscar producto...">
 
 <div class="card">
   <input id="categoriaNombre" placeholder="Categoría">
@@ -67,40 +189,60 @@
 <button onclick="generarPDF()">GENERAR PDF</button>
 
 <div id="listaProductos"></div>
+<div id="sinResultados">No se encontraron productos</div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modalEditar" class="modal">
+  <div class="modal-content">
+    <h3>Editar producto</h3>
+
+    <input id="editNombre">
+    <input id="editPrecio">
+    <select id="editCategoria"></select>
+    <input type="file" id="editImagen">
+
+    <label>Oferta <input type="checkbox" id="editOferta"></label>
+    <label>Top <input type="checkbox" id="editDestacado"></label>
+
+    <br><br>
+    <button onclick="guardarEdicion()">Guardar</button>
+    <button onclick="cerrarModal()">Cancelar</button>
+  </div>
+</div>
 
 <script>
 const API = "https://distriwest-backend-production.up.railway.app";
+
+let productoEditandoId = null;
+let imagenActual = null;
 
 async function cargarCategorias() {
   const res = await fetch(API + "/categorias");
   const data = await res.json();
 
-  const select = document.getElementById("categoriaId");
-  select.innerHTML = "";
+  categoriaId.innerHTML = "";
+  editCategoria.innerHTML = "";
 
   data.forEach(c => {
-    const op = document.createElement("option");
-    op.value = c.id;
-    op.textContent = c.nombre;
-    select.appendChild(op);
+    categoriaId.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
+    editCategoria.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
   });
 }
 
 async function crearCategoria() {
-  const nombre = document.getElementById("categoriaNombre").value;
-
   await fetch(API + "/categorias", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ nombre })
+    body: JSON.stringify({ nombre: categoriaNombre.value })
   });
-
   cargarCategorias();
 }
 
 async function crearProducto() {
   let imagenUrl = null;
-  const file = document.getElementById("imagen").files[0];
+  const file = imagen.files[0];
 
   if (file) {
     const form = new FormData();
@@ -128,25 +270,139 @@ async function crearProducto() {
     })
   });
 
+  alert("Producto creado correctamente ✅");
+
+  nombre.value = "";
+  precio.value = "";
+  imagen.value = "";
+
   cargarProductos();
+}
+
+async function eliminarProducto(id) {
+  await fetch(API + "/productos/" + id, { method:"DELETE" });
+  cargarProductos();
+}
+
+function editarProducto(p) {
+  productoEditandoId = p.id;
+  imagenActual = p.imagen_url;
+
+  editNombre.value = p.nombre;
+  editPrecio.value = p.precio;
+  editCategoria.value = p.categoria_id;
+  editOferta.checked = p.oferta;
+  editDestacado.checked = p.destacado;
+
+  document.getElementById("modalEditar").style.display = "flex";
+}
+
+async function guardarEdicion() {
+
+  let imagenUrl = imagenActual;
+  const file = editImagen.files[0];
+
+  if (file) {
+    const form = new FormData();
+    form.append("imagen", file);
+
+    const res = await fetch(API + "/upload", {
+      method:"POST",
+      body: form
+    });
+
+    const data = await res.json();
+    imagenUrl = data.url;
+  }
+
+  await fetch(API + "/productos/" + productoEditandoId, {
+    method:"PUT",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      nombre: editNombre.value,
+      precio: Number(editPrecio.value),
+      categoria_id: Number(editCategoria.value),
+      imagen_url: imagenUrl,
+      oferta: editOferta.checked,
+      destacado: editDestacado.checked
+    })
+  });
+
+  alert("Producto actualizado ✅");
+
+  cerrarModal();
+  cargarProductos();
+}
+
+function cerrarModal() {
+  document.getElementById("modalEditar").style.display = "none";
 }
 
 async function cargarProductos() {
   const res = await fetch(API + "/productos");
   const data = await res.json();
 
-  const cont = document.getElementById("listaProductos");
-  cont.innerHTML = "";
+  const texto = document.getElementById("buscador").value.toLowerCase();
+
+  const agrupados = {};
 
   data.forEach(p => {
-    cont.innerHTML += `
-      <div class="producto-card">
-        <img src="${p.imagen_url}">
-        <b>${p.nombre}</b>
-        <p>$${p.precio}</p>
-      </div>
-    `;
+    if (
+      texto &&
+      !p.nombre.toLowerCase().includes(texto) &&
+      !p.categorias?.nombre?.toLowerCase().includes(texto)
+    ) return;
+
+    const cat = p.categorias?.nombre || "Sin categoría";
+
+    if (!agrupados[cat]) agrupados[cat] = [];
+    agrupados[cat].push(p);
   });
+
+  listaProductos.innerHTML = "";
+  let hayResultados = false;
+
+  Object.keys(agrupados).forEach(cat => {
+    if (agrupados[cat].length === 0) return;
+
+    hayResultados = true;
+
+    const contenedor = document.createElement("div");
+
+    const titulo = document.createElement("h2");
+    titulo.className = "categoria";
+    titulo.textContent = cat;
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+
+    agrupados[cat].forEach(p => {
+      const card = document.createElement("div");
+      card.className = "producto-card";
+
+      card.innerHTML = `
+        ${p.oferta ? '<div class="badge oferta">OFERTA</div>' : ''}
+        ${p.destacado ? '<div class="badge destacado">TOP</div>' : ''}
+
+        <img src="${p.imagen_url}">
+        <h4>${p.nombre}</h4>
+        <p>$${p.precio}</p>
+
+        <div class="acciones">
+          <button onclick='editarProducto(${JSON.stringify(p)})'>Editar</button>
+          <button onclick="eliminarProducto(${p.id})">Eliminar</button>
+        </div>
+      `;
+
+      grid.appendChild(card);
+    });
+
+    contenedor.appendChild(titulo);
+    contenedor.appendChild(grid);
+    listaProductos.appendChild(contenedor);
+  });
+
+  document.getElementById("sinResultados").style.display = hayResultados ? "none" : "block";
 }
 
 function generarPDF() {
@@ -156,6 +412,9 @@ function generarPDF() {
 window.onload = () => {
   cargarCategorias();
   cargarProductos();
+
+  document.getElementById("buscador")
+    .addEventListener("input", cargarProductos);
 };
 </script>
 

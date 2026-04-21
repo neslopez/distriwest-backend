@@ -126,38 +126,63 @@ app.post("/upload", async (req, res) => {
 
 // 📄 GENERAR PDF
 app.get("/generar-pdf", async (req, res) => {
+
   const { data, error } = await supabase
     .from("productos")
     .select(`*, categorias(nombre)`);
 
   if (error) return res.status(500).json(error);
 
-  const agrupados = {};
+  // 🔥 ORDEN INTELIGENTE
+  data.sort((a, b) => {
+    if (a.destacado && !b.destacado) return -1;
+    if (!a.destacado && b.destacado) return 1;
+    if (a.oferta && !b.oferta) return -1;
+    if (!a.oferta && b.oferta) return 1;
+    return 0;
+  });
 
+  // 🧠 AGRUPAR
+  const agrupados = {};
   data.forEach(p => {
     const cat = p.categorias?.nombre || "Sin categoría";
     if (!agrupados[cat]) agrupados[cat] = [];
     agrupados[cat].push(p);
   });
 
+  const fecha = new Date().toLocaleDateString();
+
   let html = `
   <html>
   <head>
     <style>
-      body { font-family: Arial; padding: 30px; }
+      body {
+        font-family: Arial;
+        padding:20px;
+      }
 
       .portada {
-        height: 90vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
+        display:flex;
+        height:90vh;
+        align-items:center;
+        justify-content:center;
+        flex-direction:column;
         page-break-after: always;
       }
 
       .portada h1 {
-        font-size: 60px;
-        color: #1976d2;
+        font-size:50px;
+        color:#1976d2;
+      }
+
+      .portada p {
+        font-size:18px;
+      }
+
+      .fecha {
+        margin-top:20px;
+        font-size:14px;
+        color:#666;
       }
 
       .categoria {
@@ -165,49 +190,51 @@ app.get("/generar-pdf", async (req, res) => {
       }
 
       h2 {
-        border-bottom: 4px solid #1976d2;
-        padding-bottom: 10px;
+        border-bottom:3px solid #1976d2;
       }
 
       .grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
+        display:grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap:15px;
       }
 
       .card {
-        width: 30%;
-        border: 1px solid #ccc;
-        border-radius: 12px;
-        padding: 10px;
-        text-align: center;
-        position: relative;
+        border:1px solid #ddd;
+        border-radius:10px;
+        padding:10px;
+        text-align:center;
+        position:relative;
+        height:250px;
       }
 
       img {
-        width: 100%;
-        height: 120px;
-        object-fit: contain;
+        width:100%;
+        height:120px;
+        object-fit:contain;
       }
 
       .precio {
-        font-size: 18px;
-        color: green;
-        font-weight: bold;
+        color:green;
+        font-weight:bold;
       }
 
       .badge {
-        position: absolute;
-        top: 5px;
-        left: 5px;
-        padding: 4px 8px;
-        font-size: 10px;
-        color: white;
-        border-radius: 5px;
+        position:absolute;
+        top:5px;
+        left:5px;
+        color:white;
+        padding:3px 6px;
+        font-size:10px;
+        border-radius:5px;
       }
 
-      .oferta { background: red; }
-      .destacado { background: orange; }
+      .oferta { background:red; }
+      .destacado { background:orange; }
+
+      .card {
+        page-break-inside: avoid;
+      }
     </style>
   </head>
 
@@ -216,6 +243,7 @@ app.get("/generar-pdf", async (req, res) => {
   <div class="portada">
     <h1>DistriWest</h1>
     <p>Catálogo de Productos</p>
+    <div class="fecha">Fecha: ${fecha}</div>
   </div>
   `;
 
@@ -224,14 +252,23 @@ app.get("/generar-pdf", async (req, res) => {
     html += `<h2>${categoria}</h2>`;
     html += `<div class="grid">`;
 
-    agrupados[categoria].forEach(p => {
+    agrupados[categoria].forEach((p, i) => {
+
+      // 🔥 CORTE CADA 9 PRODUCTOS
+      if (i > 0 && i % 9 === 0) {
+        html += `</div></div><div class="categoria"><h2>${categoria}</h2><div class="grid">`;
+      }
+
       html += `
         <div class="card">
+
           ${p.oferta ? `<div class="badge oferta">OFERTA</div>` : ""}
           ${p.destacado ? `<div class="badge destacado">TOP</div>` : ""}
+
           <img src="${p.imagen_url}" />
           <p><b>${p.nombre}</b></p>
           <p class="precio">$${p.precio}</p>
+
         </div>
       `;
     });
@@ -242,16 +279,18 @@ app.get("/generar-pdf", async (req, res) => {
   html += `</body></html>`;
 
   const browser = await puppeteer.launch({
-    executablePath: "/usr/bin/chromium-browser",
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
-  });
+  headless: "new",
+  args: ["--no-sandbox", "--disable-setuid-sandbox"]
+});
 
   const page = await browser.newPage();
+
   await page.setContent(html, { waitUntil: "networkidle0" });
 
   const pdf = await page.pdf({
     format: "A4",
-    printBackground: true
+    printBackground: true,
+    margin: { top: "10mm", bottom: "10mm" }
   });
 
   await browser.close();
@@ -263,7 +302,6 @@ app.get("/generar-pdf", async (req, res) => {
 
   res.send(pdf);
 });
-
 // 🚀 SERVER
 const PORT = process.env.PORT || 3000;
 
