@@ -1,18 +1,17 @@
 console.log("🔥 SERVER NUEVO CARGADO");
-import dotenv from "dotenv";
 
-// 🔥 CARGAR VARIABLES (IMPORTANTE)
+import dotenv from "dotenv";
 dotenv.config({ path: "./backend/.env" });
 
 import cors from "cors";
 import express from "express";
 import fileUpload from "express-fileupload";
-//import puppeteer from "puppeteer-core";
+import PDFDocument from "pdfkit";
 import { supabase } from "./backend/config/supabase.js";
 
 const app = express();
 
-// 🔧 CONFIGURACIÓN RAILWAY
+// 🔧 CONFIG
 app.set("trust proxy", 1);
 
 app.use(cors({
@@ -24,10 +23,12 @@ app.use(cors({
 app.use(express.json());
 app.use(fileUpload());
 
+
 // 🏠 HOME
 app.get("/", (req, res) => {
   res.send("Servidor funcionando 🚀");
 });
+
 
 // 📂 CATEGORIAS
 app.get("/categorias", async (req, res) => {
@@ -47,6 +48,7 @@ app.post("/categorias", async (req, res) => {
   if (error) return res.status(500).json(error);
   res.json(data);
 });
+
 
 // 📦 PRODUCTOS
 app.get("/productos", async (req, res) => {
@@ -94,6 +96,7 @@ app.delete("/productos/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
+
 // 📤 SUBIR IMAGEN
 app.post("/upload", async (req, res) => {
   try {
@@ -124,14 +127,24 @@ app.post("/upload", async (req, res) => {
   }
 });
 
-// 📄 GENERAR PDF
-import PDFDocument from "pdfkit";
+
+// 📄 PDF PROFESIONAL
+//import PDFDocument from "pdfkit";
 
 app.get("/generar-pdf", async (req, res) => {
   try {
     const { data: productos } = await supabase
       .from("productos")
       .select(`*, categorias(nombre)`);
+
+    // 🔥 AGRUPAR POR CATEGORIA
+    const categorias = {};
+
+    productos.forEach(p => {
+      const cat = p.categorias?.nombre || "Sin categoría";
+      if (!categorias[cat]) categorias[cat] = [];
+      categorias[cat].push(p);
+    });
 
     const doc = new PDFDocument({ margin: 30 });
 
@@ -142,56 +155,133 @@ app.get("/generar-pdf", async (req, res) => {
 
     // 🎯 HEADER
     doc
-      .fontSize(20)
+      .fontSize(22)
+      .fillColor("#0d47a1")
       .text("DISTRIWEST", { align: "center" });
 
     doc
       .fontSize(12)
+      .fillColor("gray")
       .text("Distribuidora Mayorista", { align: "center" });
 
-    doc.moveDown();
+    doc.moveDown(2);
 
-    let x = 30;
-    let y = 100;
+    let pageX = 30;
+    let pageY = 120;
+    let col = 0;
+    let row = 0;
     let count = 0;
 
-    productos.forEach((p) => {
+    const CARD_WIDTH = 170;
+    const CARD_HEIGHT = 150;
 
-      // 📄 NUEVA PÁGINA CADA 9 PRODUCTOS
-      if (count === 9) {
-        doc.addPage();
-        x = 30;
-        y = 100;
-        count = 0;
-      }
+    Object.keys(categorias).forEach(cat => {
 
-      // 🧱 CAJA
-      doc.rect(x, y, 150, 120).stroke();
+      // 🧱 NUEVA PÁGINA POR CATEGORÍA
+      doc.addPage();
 
-      // 🏷 NOMBRE
-      doc.fontSize(10).text(p.nombre, x + 5, y + 5);
+      // 📦 TITULO CATEGORIA
+      doc
+        .fontSize(16)
+        .fillColor("#0d47a1")
+        .text(cat, 30, 40);
 
-      // 💰 PRECIO
-      doc.text("$" + p.precio, x + 5, y + 20);
+      pageX = 30;
+      pageY = 80;
+      col = 0;
+      row = 0;
+      count = 0;
 
-      // 🔥 BADGES
-      if (p.oferta) doc.fillColor("red").text("OFERTA", x + 5, y + 35).fillColor("black");
-      if (p.destacado) doc.fillColor("orange").text("TOP", x + 5, y + 50).fillColor("black");
+      categorias[cat].forEach(p => {
 
-      // 📦 CATEGORÍA
-      doc.fontSize(8).text(p.categorias?.nombre || "", x + 5, y + 70);
+        // 📄 SALTO CADA 9 PRODUCTOS
+        if (count === 9) {
+          doc.addPage();
 
-      // 📅 FECHA
-      doc.text(new Date().toLocaleDateString(), x + 5, y + 85);
+          doc
+            .fontSize(16)
+            .fillColor("#0d47a1")
+            .text(cat, 30, 40);
 
-      x += 170;
+          pageX = 30;
+          pageY = 80;
+          col = 0;
+          row = 0;
+          count = 0;
+        }
 
-      if (x > 400) {
-        x = 30;
-        y += 140;
-      }
+        const x = pageX + col * (CARD_WIDTH + 10);
+        const y = pageY + row * (CARD_HEIGHT + 10);
 
-      count++;
+        // 🧱 CARD
+        doc
+          .roundedRect(x, y, CARD_WIDTH, CARD_HEIGHT, 10)
+          .stroke("#cccccc");
+
+        // 🏷 NOMBRE
+        doc
+          .fontSize(11)
+          .fillColor("black")
+          .text(p.nombre, x + 10, y + 10, {
+            width: CARD_WIDTH - 20,
+            align: "center"
+          });
+
+        // 💰 PRECIO
+        doc
+          .fontSize(12)
+          .fillColor("#2e7d32")
+          .text(`$${p.precio}`, x + 10, y + 30, {
+            align: "center"
+          });
+
+        // 🔥 BADGES
+        if (p.oferta) {
+          doc
+            .fontSize(8)
+            .fillColor("white")
+            .rect(x + 5, y + 5, 45, 12)
+            .fill("#e53935")
+            .fillColor("white")
+            .text("OFERTA", x + 8, y + 7);
+        }
+
+        if (p.destacado) {
+          doc
+            .fontSize(8)
+            .fillColor("white")
+            .rect(x + CARD_WIDTH - 50, y + 5, 40, 12)
+            .fill("#fb8c00")
+            .fillColor("white")
+            .text("TOP", x + CARD_WIDTH - 45, y + 7);
+        }
+
+        // 📦 CATEGORIA
+        doc
+          .fontSize(8)
+          .fillColor("gray")
+          .text(p.categorias?.nombre || "", x + 10, y + 110, {
+            align: "center"
+          });
+
+        // 📅 FECHA
+        doc
+          .fontSize(7)
+          .fillColor("gray")
+          .text(new Date().toLocaleDateString(), x + 10, y + 125, {
+            align: "center"
+          });
+
+        // ➡️ POSICIONAMIENTO GRID
+        col++;
+
+        if (col === 3) {
+          col = 0;
+          row++;
+        }
+
+        count++;
+      });
     });
 
     doc.end();
@@ -201,6 +291,8 @@ app.get("/generar-pdf", async (req, res) => {
     res.status(500).send("Error generando PDF");
   }
 });
+
+
 // 🚀 SERVER
 const PORT = process.env.PORT || 3000;
 
