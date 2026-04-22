@@ -168,7 +168,7 @@ app.get("/generar-pdf", async (req, res) => {
 
     // ================= HELPERS =================
     const CARD_WIDTH = 160;
-    const CARD_HEIGHT = 170;
+    const CARD_HEIGHT = 190;
     const GAP = 20;
 
     async function drawProducto(p, x, y) {
@@ -247,23 +247,48 @@ clearTimeout(timeout);
   }
 
   // ===== TEXTO =====
-  doc.fontSize(11).fillColor("#000")
-    .text(p.nombre, x + 10, y + 95, {
-      width: 140,
-      align: "center"
-    });
+ // ===== TEXTO DINÁMICO =====
+let currentY = y + 95;
 
-  doc.fontSize(18).fillColor("#2e7d32")
-    .text(`$${p.precio}`, x + 10, y + 115, {
-      width: 140,
-      align: "center"
-    });
+// ===== NOMBRE =====
+doc.fontSize(11).fillColor("#000");
 
-  doc.fillColor("#777").fontSize(8)
-    .text(p.categorias?.nombre || "", x + 10, y + 140, {
-      width: 140,
-      align: "center"
-    });
+const nombreHeight = doc.heightOfString(p.nombre, {
+  width: 140,
+  align: "center"
+});
+
+doc.text(p.nombre, x + 10, currentY, {
+  width: 140,
+  align: "center"
+});
+
+currentY += nombreHeight + 5;
+
+
+// ===== PRECIO =====
+doc.fontSize(18).fillColor("#2e7d32");
+
+const precioHeight = doc.heightOfString(`$${p.precio}`, {
+  width: 140,
+  align: "center"
+});
+
+doc.text(`$${p.precio}`, x + 10, currentY, {
+  width: 140,
+  align: "center"
+});
+
+currentY += precioHeight + 5;
+
+
+// ===== CATEGORIA =====
+doc.fontSize(8).fillColor("#777");
+
+doc.text(p.categorias?.nombre || "", x + 10, currentY, {
+  width: 140,
+  align: "center"
+});
 }
 
     async function renderSeccion(titulo, lista) {
