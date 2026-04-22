@@ -180,7 +180,14 @@ app.get("/generar-pdf", async (req, res) => {
 
   if (p.imagen_url) {
     try {
-      const response = await fetch(p.imagen_url);
+      const controller = new AbortController();
+const timeout = setTimeout(() => controller.abort(), 5000);
+
+const response = await fetch(p.imagen_url, {
+  signal: controller.signal
+});
+
+clearTimeout(timeout);
 
       if (response.ok) {
         const buffer = await response.arrayBuffer();
@@ -262,7 +269,7 @@ app.get("/generar-pdf", async (req, res) => {
     async function renderSeccion(titulo, lista) {
       if (!lista.length) return;
 
-      doc.addPage();
+      //doc.addPage();
 
       doc.fillColor("#0d47a1").fontSize(20).text(titulo, 40, 60);
 
@@ -273,7 +280,7 @@ app.get("/generar-pdf", async (req, res) => {
       for (const p of lista) {
 
         // 🔥 CONTROL ANTES DE DIBUJAR
-        if (y + CARD_HEIGHT > 750) {
+        if (y + CARD_HEIGHT + 20 > doc.page.height) {
           doc.addPage();
           y = 100;
           x = 40;
