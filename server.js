@@ -168,7 +168,7 @@ app.get("/generar-pdf", async (req, res) => {
 
     // ================= HELPERS =================
     const CARD_WIDTH = 160;
-    const CARD_HEIGHT = 190;
+    const CARD_HEIGHT = 200;
     const GAP = 20;
 
     async function drawProducto(p, x, y) {
@@ -247,7 +247,7 @@ clearTimeout(timeout);
   }
 
   // ===== TEXTO =====
- // ===== TEXTO DINÁMICO =====
+ // ===== TEXTO DINÁMICO CORRECTO =====
 let currentY = y + 95;
 
 // ===== NOMBRE =====
@@ -260,7 +260,8 @@ const nombreHeight = doc.heightOfString(p.nombre, {
 
 doc.text(p.nombre, x + 10, currentY, {
   width: 140,
-  align: "center"
+  align: "center",
+  lineBreak: false
 });
 
 currentY += nombreHeight + 5;
@@ -276,7 +277,8 @@ const precioHeight = doc.heightOfString(`$${p.precio}`, {
 
 doc.text(`$${p.precio}`, x + 10, currentY, {
   width: 140,
-  align: "center"
+  align: "center",
+  lineBreak: false
 });
 
 currentY += precioHeight + 5;
@@ -287,7 +289,8 @@ doc.fontSize(8).fillColor("#777");
 
 doc.text(p.categorias?.nombre || "", x + 10, currentY, {
   width: 140,
-  align: "center"
+  align: "center",
+  lineBreak: false
 });
 }
 
