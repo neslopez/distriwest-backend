@@ -130,7 +130,7 @@ app.post("/upload", async (req, res) => {
 });
 
 // ==========================
-// 📄 PDF NIVEL EMPRESA REAL (MEJORADO)
+// 📄 PDF GENERADOR
 // ==========================
 app.get("/generar-pdf", async (req, res) => {
   try {
@@ -138,207 +138,180 @@ app.get("/generar-pdf", async (req, res) => {
       .from("productos")
       .select(`*, categorias(nombre)`);
 
-    const doc = new PDFDocument({ margin: 40 });
+    const doc = new PDFDocument({ margin: 40, autoFirstPage: false });
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "inline; filename=catalogo.pdf");
 
     doc.pipe(res);
 
+    // ================= CONSTANTES DE LAYOUT =================
+    const PAGE_WIDTH   = 595;   // A4 ancho en puntos
+    const MARGIN       = 40;
+    const COLS         = 3;
+    const GAP          = 14;
+    const CARD_W       = Math.floor((PAGE_WIDTH - MARGIN * 2 - GAP * (COLS - 1)) / COLS); // ~155
+    const IMG_H        = 90;
+    const BADGE_H      = 20;
+    const NOMBRE_MAX_H = 30;    // espacio reservado para nombre (hasta 2 líneas)
+    const PRECIO_H     = 26;
+    const CAT_H        = 16;
+    const PADDING      = 10;
+    const CARD_H       = PADDING + IMG_H + PADDING + NOMBRE_MAX_H + PRECIO_H + CAT_H + PADDING; // ~186
+
+    const SECTION_TITLE_H = 36; // altura reservada para el título de sección
+    const PAGE_H          = 841; // A4 alto
+    const USABLE_H        = PAGE_H - MARGIN * 2;
+
     // ================= PORTADA =================
-    doc.rect(0, 0, 600, 800).fill("#f4f6fa");
-    doc.rect(0, 0, 600, 60).fill("#0d47a1");
-
-    doc.fillColor("white").fontSize(22).text("DISTRIWEST", 0, 20, { align: "center" });
-
-    doc.fillColor("#0d47a1").fontSize(36).text("DISTRIWEST", 0, 220, { align: "center" });
-
-    doc.fillColor("#444").fontSize(18).text("Distribuidora Mayorista", { align: "center" });
-
-    doc.moveDown(6);
-
-    doc.fillColor("#333").fontSize(14).text("Catálogo de Productos", { align: "center" });
-
-    doc.moveDown(2);
-
-    doc.fillColor("#888").fontSize(10)
-      .text("Actualizado: " + new Date().toLocaleDateString(), { align: "center" });
-
     doc.addPage();
 
-    // ================= HELPERS =================
-    const CARD_WIDTH = 160;
-    const CARD_HEIGHT = 200;
-    const GAP = 20;
+    doc.rect(0, 0, PAGE_WIDTH, PAGE_H).fill("#f4f6fa");
+    doc.rect(0, 0, PAGE_WIDTH, 70).fill("#0d47a1");
 
-    async function drawProducto(p, x, y) {
+    doc.fillColor("white").fontSize(24).font("Helvetica-Bold")
+      .text("DISTRIWEST", 0, 22, { align: "center", width: PAGE_WIDTH });
 
-  doc.roundedRect(x, y, 160, 170, 12).stroke("#ddd");
+    doc.fillColor("#0d47a1").fontSize(42).font("Helvetica-Bold")
+      .text("DISTRIWEST", 0, 260, { align: "center", width: PAGE_WIDTH });
 
-  // ===== IMAGEN SEGURA =====
-  let imagenOK = false;
+    doc.fillColor("#444").fontSize(20).font("Helvetica")
+      .text("Distribuidora Mayorista", 0, 315, { align: "center", width: PAGE_WIDTH });
 
-  if (p.imagen_url) {
-    try {
-      const controller = new AbortController();
-const timeout = setTimeout(() => controller.abort(), 5000);
+    doc.fillColor("#333").fontSize(15).font("Helvetica-Bold")
+      .text("Catálogo de Productos", 0, 380, { align: "center", width: PAGE_WIDTH });
 
-const response = await fetch(p.imagen_url, {
-  signal: controller.signal
-});
+    doc.fillColor("#888").fontSize(11).font("Helvetica")
+      .text("Actualizado: " + new Date().toLocaleDateString("es-AR"), 0, 415, { align: "center", width: PAGE_WIDTH });
 
-clearTimeout(timeout);
+    // ================= HELPER: DIBUJAR CARD =================
+    async function drawCard(p, x, y) {
+      // --- fondo y borde de la card ---
+      doc.roundedRect(x, y, CARD_W, CARD_H, 10).fillAndStroke("white", "#e0e0e0");
 
-      if (response.ok) {
-        const buffer = await response.arrayBuffer();
+      // --- IMAGEN ---
+      let imgY    = y + PADDING;
+      let imgX    = x + PADDING;
+      let imgW    = CARD_W - PADDING * 2;
+      let imagenOK = false;
 
-        doc.image(Buffer.from(buffer), x + 20, y + 10, {
-          width: 120,
-          height: 70
-        });
+      if (p.imagen_url) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 6000);
+          const response = await fetch(p.imagen_url, { signal: controller.signal });
+          clearTimeout(timeout);
 
-        imagenOK = true;
+          if (response.ok) {
+            const buffer = Buffer.from(await response.arrayBuffer());
+            doc.image(buffer, imgX, imgY, { width: imgW, height: IMG_H, fit: [imgW, IMG_H], align: "center", valign: "center" });
+            imagenOK = true;
+          }
+        } catch (err) {
+          console.log("⚠️  Imagen no cargada:", p.nombre);
+        }
       }
-    } catch (err) {
-      console.log("Error imagen:", p.nombre);
+
+      if (!imagenOK) {
+        doc.rect(imgX, imgY, imgW, IMG_H).fillAndStroke("#f5f5f5", "#ddd");
+        doc.fillColor("#aaa").fontSize(8).font("Helvetica")
+          .text("SIN IMAGEN", imgX, imgY + IMG_H / 2 - 5, { width: imgW, align: "center" });
+      }
+
+      // --- BADGES (sobre la imagen) ---
+      if (p.oferta) {
+        doc.roundedRect(x + 6, y + 6, 48, 16, 4).fill("#e53935");
+        doc.fillColor("white").fontSize(7).font("Helvetica-Bold")
+          .text("OFERTA", x + 6, y + 9, { width: 48, align: "center" });
+      }
+
+      if (p.destacado) {
+        doc.roundedRect(x + CARD_W - 54, y + 6, 48, 16, 4).fill("#fb8c00");
+        doc.fillColor("white").fontSize(7).font("Helvetica-Bold")
+          .text("TOP", x + CARD_W - 54, y + 9, { width: 48, align: "center" });
+      }
+
+      // --- TEXTO: posición base justo debajo de la imagen ---
+      const textX = x + PADDING;
+      const textW = CARD_W - PADDING * 2;
+      let   curY  = y + PADDING + IMG_H + 6;
+
+      // NOMBRE (máximo 2 líneas, clamp con ellipsis manual si es necesario)
+      doc.fillColor("#111").fontSize(9).font("Helvetica-Bold");
+      doc.text(p.nombre, textX, curY, {
+        width: textW,
+        align: "center",
+        lineBreak: true,
+        height: NOMBRE_MAX_H,
+        ellipsis: true
+      });
+      curY += NOMBRE_MAX_H + 2;
+
+      // PRECIO
+      doc.fillColor("#2e7d32").fontSize(16).font("Helvetica-Bold");
+      doc.text("$" + Number(p.precio).toLocaleString("es-AR"), textX, curY, {
+        width: textW,
+        align: "center",
+        lineBreak: false
+      });
+      curY += PRECIO_H;
+
+      // CATEGORÍA
+      doc.fillColor("#888").fontSize(7).font("Helvetica");
+      doc.text((p.categorias?.nombre || "").toUpperCase(), textX, curY, {
+        width: textW,
+        align: "center",
+        lineBreak: false
+      });
     }
-  }
 
-  // 🔥 fallback SIEMPRE
-  if (!imagenOK) {
-    doc
-      .rect(x + 20, y + 10, 120, 70)
-      .stroke("#ccc");
-
-    doc
-      .fontSize(8)
-      .fillColor("#999")
-      .text("SIN IMAGEN", x + 20, y + 35, {
-        width: 120,
-        align: "center"
-      });
-  }
-
-  // ===== BADGES =====
-  if (p.oferta) {
-    doc.fillColor("#e53935")
-      .roundedRect(x + 8, y + 8, 50, 16, 4)
-      .fill();
-
-    doc.fillColor("white")
-      .fontSize(8)
-      .text("OFERTA", x + 8, y + 11, {
-        width: 50,
-        align: "center"
-      });
-  }
-
-  if (p.destacado) {
-    doc.fillColor("#fb8c00")
-      .roundedRect(x + 102, y + 8, 50, 16, 4)
-      .fill();
-
-    doc.fillColor("white")
-      .fontSize(8)
-      .text("TOP", x + 102, y + 11, {
-        width: 50,
-        align: "center"
-      });
-  }
-
-  // ===== TEXTO =====
- // ===== TEXTO DINÁMICO CORRECTO =====
-let currentY = y + 95;
-
-// ===== NOMBRE =====
-doc.fontSize(11).fillColor("#000");
-
-const nombreHeight = doc.heightOfString(p.nombre, {
-  width: 140,
-  align: "center"
-});
-
-doc.text(p.nombre, x + 10, currentY, {
-  width: 140,
-  align: "center",
-  lineBreak: false
-});
-
-currentY += nombreHeight + 5;
-
-
-// ===== PRECIO =====
-doc.fontSize(18).fillColor("#2e7d32");
-
-const precioHeight = doc.heightOfString(`$${p.precio}`, {
-  width: 140,
-  align: "center"
-});
-
-doc.text(`$${p.precio}`, x + 10, currentY, {
-  width: 140,
-  align: "center",
-  lineBreak: false
-});
-
-currentY += precioHeight + 5;
-
-
-// ===== CATEGORIA =====
-doc.fontSize(8).fillColor("#777");
-
-doc.text(p.categorias?.nombre || "", x + 10, currentY, {
-  width: 140,
-  align: "center",
-  lineBreak: false
-});
-}
-
+    // ================= HELPER: RENDERIZAR SECCIÓN =================
     async function renderSeccion(titulo, lista) {
       if (!lista.length) return;
 
-      //doc.addPage();
+      // --- nueva página para cada sección ---
+      doc.addPage();
 
-      doc.fillColor("#0d47a1").fontSize(20).text(titulo, 40, 60);
+      // --- título de sección ---
+      doc.rect(0, MARGIN - 10, PAGE_WIDTH, SECTION_TITLE_H).fill("#0d47a1");
+      doc.fillColor("white").fontSize(16).font("Helvetica-Bold")
+        .text(titulo, MARGIN, MARGIN, { width: PAGE_WIDTH - MARGIN * 2 });
 
-      let x = 40;
-      let y = 100;
-      let col = 0;
+      let curY = MARGIN + SECTION_TITLE_H + 10;
+      let col  = 0;
+      let curX = MARGIN;
 
       for (const p of lista) {
-
-        // 🔥 CONTROL ANTES DE DIBUJAR
-        if (y + CARD_HEIGHT + 20 > doc.page.height) {
+        // ¿entra la card en esta página?
+        if (curY + CARD_H > PAGE_H - MARGIN) {
           doc.addPage();
-          y = 100;
-          x = 40;
-          col = 0;
+          curY = MARGIN;
+          col  = 0;
+          curX = MARGIN;
         }
 
-        await drawProducto(p, x, y);
+        await drawCard(p, curX, curY);
 
         col++;
-
-        if (col === 3) {
-          col = 0;
-          x = 40;
-          y += CARD_HEIGHT + GAP;
+        if (col >= COLS) {
+          col  = 0;
+          curX = MARGIN;
+          curY += CARD_H + GAP;
         } else {
-          x += CARD_WIDTH + GAP;
+          curX += CARD_W + GAP;
         }
       }
     }
 
-    // ================= ORDEN =================
-    const ofertas = productos.filter(p => p.oferta);
+    // ================= CLASIFICACIÓN =================
+    const ofertas    = productos.filter(p => p.oferta);
     const destacados = productos.filter(p => p.destacado && !p.oferta);
-    const normales = productos.filter(p => !p.oferta && !p.destacado);
+    const normales   = productos.filter(p => !p.oferta && !p.destacado);
 
     // ================= RENDER =================
     await renderSeccion("OFERTAS", ofertas);
     await renderSeccion("DESTACADOS", destacados);
 
-    // normales por categoría
     const agrupados = {};
     normales.forEach(p => {
       const cat = p.categorias?.nombre || "Sin categoría";
@@ -353,8 +326,8 @@ doc.text(p.categorias?.nombre || "", x + 10, currentY, {
     doc.end();
 
   } catch (err) {
-    console.log(err);
-    res.status(500).send("Error PDF");
+    console.error(err);
+    res.status(500).send("Error generando PDF");
   }
 });
 
