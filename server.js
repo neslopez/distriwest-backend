@@ -7,6 +7,7 @@ import cors from "cors";
 import express from "express";
 import fileUpload from "express-fileupload";
 import PDFDocument from "pdfkit";
+import sharp from "sharp";
 import { supabase } from "./backend/config/supabase.js";
 
 const app = express();
@@ -203,10 +204,14 @@ app.get("/generar-pdf", async (req, res) => {
           clearTimeout(timeout);
 
           if (response.ok) {
-            const buffer = Buffer.from(await response.arrayBuffer());
-            doc.image(buffer, imgX, imgY, { width: imgW, height: IMG_H, fit: [imgW, IMG_H], align: "center", valign: "center" });
-            imagenOK = true;
-          }
+  const rawBuffer = Buffer.from(await response.arrayBuffer());
+
+  // Convertir cualquier formato (webp, png, jpg) a PNG para PDFKit
+  const buffer = await sharp(rawBuffer).png().toBuffer();
+
+  doc.image(buffer, imgX, imgY, { width: imgW, height: IMG_H, fit: [imgW, IMG_H], align: "center", valign: "center" });
+  imagenOK = true;
+}
         } catch (err) {
           console.log("⚠️  Imagen no cargada:", p.nombre);
         }
