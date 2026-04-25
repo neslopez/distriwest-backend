@@ -242,7 +242,7 @@ app.get("/generar-pdf", async (req, res) => {
       let   curY  = y + PADDING + IMG_H + 6;
 
       // NOMBRE (máximo 2 líneas, clamp con ellipsis manual si es necesario)
-      doc.fillColor("#111").fontSize(9).font("Helvetica-Bold");
+      doc.fillColor("#111").fontSize(11).font("Helvetica-Bold");
       doc.text(p.nombre, textX, curY, {
         width: textW,
         align: "center",
